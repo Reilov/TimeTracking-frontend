@@ -10,5 +10,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <router-view></router-view>
+  <div class="min-h-screen bg-gradient-to-r from-orange-500 to-orange-700">
+    <router-view></router-view>
+  </div>
 </template>

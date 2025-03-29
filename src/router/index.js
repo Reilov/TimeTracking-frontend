@@ -9,7 +9,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
-      path: '/login',
+      path: '/',
       name: 'Login',
       component: Login,
       meta: { requiresGuest: true }, // Доступно только для НЕавторизованных
@@ -32,7 +32,7 @@ router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
 
   if (to.meta.requiresAuth && !authStore.isLoggedIn) {
-    next('/login') // Перенаправляем на логин
+    next('/') // Перенаправляем на логин
   } else if (to.meta.requiresGuest && authStore.isLoggedIn) {
     next('/dashboard') // Если уже авторизован, не пускаем на логин
   } else {

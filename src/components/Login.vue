@@ -1,4 +1,5 @@
 <script setup>
+import axios from 'axios'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -10,19 +11,24 @@ const password = ref('')
 const error = ref(null)
 
 const handleSubmit = async () => {
-  const response = await authStore.login(email.value, password.value)
-  if (response) {
+  error.value = null
+
+  const response = await axios.post('http://backenddiplom/login.php', {
+    email: email.value,
+    password: password.value,
+  })
+
+  if (response.data.status === 'success') {
     error.value = null
     router.push(authStore.returnUrl || '/dashboard')
+    authStore.setAuthData(response.data)
   } else {
-    error.value = 'Неверные учетные данные'
+    error.value = response.data.message || 'Ошибка входа. Пожалуйста, проверьте свои данные.'
   }
 }
 </script>
 <template>
-  <div
-    class="min-h-screen flex items-center justify-center bg-gradient-to-r from-orange-500 to-orange-700"
-  >
+  <div class="h-screen flex items-center justify-center">
     <div
       class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md transform transition-all hover:scale-103"
     >
