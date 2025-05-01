@@ -4,24 +4,23 @@ import axios from 'axios'
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
-    isLoggedIn: false,
+    isLoggedIn: null,
   }),
 
   actions: {
-    logout() {
-      this.clearAuthData()
-    },
-
-    checkAuth() {
+    async checkAuth() {
       try {
-        const token = localStorage.getItem('authToken')
-        const user = localStorage.getItem('user')
+        const response = await axios.get('/api/check_login.php', {
+          withCredentials: true,
+        })
 
-        if (token && user) {
-          this.user = JSON.parse(user)
+        if (response.data.status === 'success') {
+          this.user = response.data.user
           this.isLoggedIn = true
           return true
         }
+
+        this.isLoggedIn = false
         return false
       } catch (error) {
         console.error('Auth check error:', error)
@@ -30,19 +29,28 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    // Вспомогательные методы
-    setAuthData(authData) {
-      this.user = authData.user
+    async logout() {
+      await axios.get('/api/logout.php', {
+        withCredentials: true,
+      })
+      this.clearAuthData()
+    },
+
+    setAuthData(user) {
+      this.user = user
       this.isLoggedIn = true
-      localStorage.setItem('authToken', authData.token)
-      localStorage.setItem('user', JSON.stringify(authData.user))
     },
 
     clearAuthData() {
       this.user = null
-      this.isLoggedIn = false
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('user')
+      this.isLoggedIn = null
+    },
+
+    updateProfileData(profileData) {
+      this.user = {
+        ...this.user,
+        ...profileData,
+      }
     },
 
     async updateAvatar(file) {
@@ -51,21 +59,13 @@ export const useAuthStore = defineStore('auth', {
         formData.append('avatar', file)
         formData.append('user_id', this.user.id)
 
-        const response = await axios.post('http://backenddiplom/upload_avatar.php', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+        const response = await axios.post('/api/upload_avatar.php', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          withCredentials: true,
         })
 
         if (response.data.status === 'success') {
-          // Обновляем локальное состояние
           this.user.avatar = response.data.avatar + '?t=' + Date.now()
-
-          // Обновляем localStorage
-          const userData = JSON.parse(localStorage.getItem('user'))
-          userData.avatar = response.data.avatar
-          localStorage.setItem('user', JSON.stringify(userData))
-
           return true
         }
         return false

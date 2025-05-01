@@ -1,9 +1,12 @@
 <script setup>
 import axios from 'axios'
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import Logo from '@/components/Logo.vue'
+import ErrorMessage from '@/components/ErrorMessage.vue'
 import TextInput from '@/components/TextInput.vue'
+import Button from '@/components/Button.vue'
 import MailIcon from '@/components/icons/MailIcon.vue'
 import LockIcon from '@/components/icons/LockIcon.vue'
 
@@ -12,56 +15,80 @@ const authStore = useAuthStore()
 const email = ref('')
 const password = ref('')
 const error = ref(null)
+const isLoading = ref(false)
 
 const handleSubmit = async () => {
-  error.value = null
+  try {
+    isLoading.value = true
+    const response = await axios.post(
+      '/api/login.php',
+      {
+        email: email.value,
+        password: password.value,
+      },
+      { withCredentials: true },
+    )
 
-  const response = await axios.post('http://backenddiplom/login.php', {
-    email: email.value,
-    password: password.value,
-  })
-
-  if (response.data.status === 'success') {
-    error.value = null
-    router.push(authStore.returnUrl || '/dashboard')
-    authStore.setAuthData(response.data)
-  } else {
-    error.value = response.data.message || 'Ошибка входа. Пожалуйста, проверьте свои данные.'
+    if (response.data.status === 'success') {
+      error.value = null
+      authStore.setAuthData(response.data.user)
+      await nextTick() // Ждём обновления Vue
+      router.push('/dashboard')
+    } else {
+      isLoading.value = false
+      error.value = response.data.message || 'Ошибка входа. Пожалуйста, проверьте свои данные.'
+    }
+  } catch {
+    error.value = 'Произошла ошибка при подключении к серверу'
+    isLoading.value = false
   }
 }
 </script>
+
 <template>
-  <div class="h-screen flex items-center justify-center">
-    <div
-      class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md transform transition-all hover:scale-103"
-    >
-      <div class="text-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Вход в систему</h1>
-        <p class="text-gray-600">Введите свои данные для доступа</p>
+  <div class="flex items-center justify-center h-full">
+    <div class="w-full max-w-md">
+      <Logo />
+      <div
+        class="bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl mt-8"
+      >
+        <div class="h-2 bg-gradient-to-r from-orange-400 to-orange-600"></div>
+        <div class="p-8">
+          <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Добро пожаловать</h1>
+            <p class="text-sm md:text-base text-gray-500">
+              Введите свои данные для входа в систему
+            </p>
+          </div>
+
+          <form @submit.prevent="handleSubmit" class="space-y-6">
+            <TextInput
+              v-model="email"
+              type="email"
+              placeholder="example@mail.com"
+              label="Email"
+              :icon="MailIcon"
+              required
+            />
+            <TextInput
+              v-model="password"
+              type="password"
+              placeholder="••••••••"
+              label="Пароль"
+              :icon="LockIcon"
+              a
+              required
+            />
+
+            <ErrorMessage v-if="error" :error="error" />
+
+            <Button textButton="Войти" :isLoading="isLoading" size="big" class="w-full" />
+          </form>
+        </div>
       </div>
-      <form @submit.prevent="handleSubmit">
-        <TextInput
-          v-model="email"
-          type="email"
-          placeholder="Введите ваш email"
-          label="Email"
-          :icon="MailIcon"
-        />
-        <TextInput
-          v-model="password"
-          type="password"
-          placeholder="Введите ваш пароль"
-          label="Пароль"
-          :icon="LockIcon"
-        />
-        <p v-if="error" class="text-red-600 text-sm font-medium mb-2 text-center">{{ error }}</p>
-        <button
-          type="submit"
-          class="cursor-pointer w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105"
-        >
-          Войти
-        </button>
-      </form>
+      <div class="mt-8 text-center text-xs text-gray-400">
+        © 2025 TimeTracker. Все права защищены.
+      </div>
     </div>
   </div>
 </template>

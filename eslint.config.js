@@ -25,4 +25,10 @@ export default [
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
   skipFormatting,
+  {
+    rules: {
+      // Разрешить однословные имена компонентов (например, "Timer", "Login")
+      'vue/multi-word-component-names': 'off',
+    },
+  },
 ]
