@@ -21,7 +21,7 @@ const handleSubmit = async () => {
   try {
     isLoading.value = true
     const response = await axios.post(
-      '/api/login.php',
+      '/api/login',
       {
         email: email.value,
         password: password.value,
@@ -32,31 +32,30 @@ const handleSubmit = async () => {
     if (response.data.status === 'success') {
       error.value = null
       authStore.setAuthData(response.data.user)
-      await nextTick() // Ждём обновления Vue
+      await nextTick()
       router.push('/dashboard')
-    } else {
-      isLoading.value = false
-      error.value = response.data.message || 'Ошибка входа. Пожалуйста, проверьте свои данные.'
     }
-  } catch {
-    error.value = 'Произошла ошибка при подключении к серверу'
+  } catch (err) {
+    error.value = err.response.data.message || 'Произошла ошибка при подключении к серверу'
     isLoading.value = false
   }
 }
 </script>
 
 <template>
-  <div class="flex items-center justify-center h-full">
+  <div class="h-220 flex items-center justify-center">
     <div class="w-full max-w-md">
       <Logo />
       <div
-        class="bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl mt-8"
+        class="bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl mt-8 dark:bg-gray-800 dark:text-white"
       >
         <div class="h-2 bg-gradient-to-r from-orange-400 to-orange-600"></div>
         <div class="p-8">
           <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">Добро пожаловать</h1>
-            <p class="text-sm md:text-base text-gray-500">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2 dark:text-gray-100">
+              Добро пожаловать
+            </h1>
+            <p class="text-sm md:text-base text-gray-500 dark:text-gray-400">
               Введите свои данные для входа в систему
             </p>
           </div>

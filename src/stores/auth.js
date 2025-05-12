@@ -4,13 +4,13 @@ import axios from 'axios'
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
-    isLoggedIn: null,
+    isLoggedIn: false,
   }),
 
   actions: {
     async checkAuth() {
       try {
-        const response = await axios.get('/api/check_login.php', {
+        const response = await axios.get('/api/check-login', {
           withCredentials: true,
         })
 
@@ -27,13 +27,6 @@ export const useAuthStore = defineStore('auth', {
         this.clearAuthData()
         return false
       }
-    },
-
-    async logout() {
-      await axios.get('/api/logout.php', {
-        withCredentials: true,
-      })
-      this.clearAuthData()
     },
 
     setAuthData(user) {
@@ -53,26 +46,8 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async updateAvatar(file) {
-      try {
-        const formData = new FormData()
-        formData.append('avatar', file)
-        formData.append('user_id', this.user.id)
-
-        const response = await axios.post('/api/upload_avatar.php', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-          withCredentials: true,
-        })
-
-        if (response.data.status === 'success') {
-          this.user.avatar = response.data.avatar + '?t=' + Date.now()
-          return true
-        }
-        return false
-      } catch (error) {
-        console.error('Avatar upload error:', error.response?.data || error.message)
-        throw error
-      }
+    setUser(userData) {
+      this.user = { ...this.user, ...userData }
     },
   },
 })

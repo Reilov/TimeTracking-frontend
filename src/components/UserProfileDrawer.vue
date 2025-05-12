@@ -1,8 +1,7 @@
 <script setup>
-import { computed } from 'vue'
-
 import CloseIcon from '@/components/icons/CloseIcon.vue'
 import AvatarProfile from '@/components/AvatarProfile.vue'
+import { computed, defineProps, defineEmits } from 'vue'
 
 defineProps({
   userProfile: Object,
@@ -10,10 +9,26 @@ defineProps({
 
 const emit = defineEmits(['toggleUserProfile'])
 
+const formatDate = (dateString) => {
+  if (!dateString) return 'Не указано'
+
+  const date = new Date(dateString)
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+
+  return `${day}.${month}.${year}`
+}
+
 const fieldsConfig = computed(() => [
   { key: 'name', label: 'ФИО', type: 'text' },
   { key: 'email', label: 'Email', type: 'text' },
-  { key: 'birth_date', label: 'Дата рождения', type: 'date' },
+  {
+    key: 'birth_date',
+    label: 'Дата рождения',
+    type: 'date',
+    formatter: formatDate,
+  },
   { key: 'phone', label: 'Телефон', type: 'tel' },
   { key: 'about', label: 'Обо мне', type: 'textarea' },
 ])
@@ -25,13 +40,15 @@ const fieldsConfig = computed(() => [
       <div class="absolute inset-0 bg-black opacity-50" @click="emit('toggleUserProfile')" />
 
       <div
-        class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300 ease-in-out"
+        class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300 ease-in-out dark:bg-gray-800 dark:text-white"
       >
-        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-          <h2 class="text-2xl font-bold text-gray-800">Профиль</h2>
+        <div
+          class="p-6 border-b border-gray-100 flex justify-between items-center dark:border-gray-700"
+        >
+          <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Профиль</h2>
           <button
             @click="emit('toggleUserProfile')"
-            class="p-1 rounded-full hover:bg-gray-100 group cursor-pointer"
+            class="p-1 rounded-full hover:bg-gray-100 group cursor-pointer dark:hover:bg-gray-700 transition-all"
           >
             <CloseIcon />
           </button>
@@ -47,11 +64,15 @@ const fieldsConfig = computed(() => [
 
             <div class="w-full space-y-4">
               <div v-for="field in fieldsConfig" :key="field.key" class="space-y-1">
-                <label class="text-sm font-medium text-gray-500">
+                <label class="text-sm font-medium text-gray-500 dark:text-gray-400">
                   {{ field.label }}
                 </label>
-                <p class="text-gray-800">
-                  {{ userProfile[field.key] || 'Не указано' }}
+                <p class="text-gray-800 dark:text-gray-100">
+                  {{
+                    field.formatter
+                      ? field.formatter(userProfile[field.key])
+                      : userProfile[field.key] || 'Не указано'
+                  }}
                 </p>
               </div>
             </div>

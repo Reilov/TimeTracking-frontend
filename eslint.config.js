@@ -27,7 +27,6 @@ export default [
   skipFormatting,
   {
     rules: {
-      // Разрешить однословные имена компонентов (например, "Timer", "Login")
       'vue/multi-word-component-names': 'off',
     },
   },

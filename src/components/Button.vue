@@ -18,19 +18,22 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'primary',
-    validator: (value) => ['primary', 'secondary'].includes(value),
+    validator: (value) => ['primary', 'secondary', 'primaryMinimal'].includes(value),
   },
 })
 
 const buttonClasses = computed(() => {
   const sizes = {
     small: 'px-4 py-1',
-    big: 'py-3 px-4',
+    big: 'py-3 px-5',
   }
   const variants = {
     primary:
-      'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-sm focus:ring-orange-500',
-    secondary: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-gray-300',
+      'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-sm transition-all dark:from-orange-600 dark:to-orange-700 dark:hover:from-orange-700 dark:hover:to-orange-800',
+    secondary:
+      'bg-gray-100 hover:bg-gray-200 transition-all dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white',
+    primaryMinimal:
+      'bg-orange-500 text-white hover:bg-orange-600 transition-all dark:bg-orange-600 dark:hover:bg-orange-700',
   }
   return [sizes[props.size], variants[props.variant]]
 })
@@ -39,7 +42,7 @@ const buttonClasses = computed(() => {
 <template>
   <button
     type="submit"
-    class="cursor-pointer flex justify-center items-center border border-transparent rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 transition-colors ease-in-out"
+    class="cursor-pointer font-semibold flex justify-center items-center rounded-lg border border-transparent shadow-sm transition-all duration-200 transition-colors ease-in-out"
     :class="buttonClasses"
     :disabled="isLoading"
   >

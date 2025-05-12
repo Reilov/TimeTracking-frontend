@@ -20,7 +20,7 @@ const props = defineProps({
 const sizeClasses = computed(() => {
   const sizes = {
     small: 'w-12 h-12 md:w-15 md:h-15 text-sm',
-    big: 'w-40 h-40 text-2xl',
+    big: 'w-40 h-40 text-2xl ',
   }
   return sizes[props.size]
 })
