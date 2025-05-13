@@ -56,7 +56,7 @@ const router = createRouter({
               path: 'new-employee',
               name: 'NewEmployee',
               component: () => import('@/components/HR/RegisterEmployee.vue'),
-              meta: { title: 'Новый сотрудник', allowedRoles: ['Admin', 'HR'] },
+              meta: { title: 'Новый сотрудник' },
             },
           ],
         },

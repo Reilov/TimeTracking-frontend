@@ -90,9 +90,5 @@ const isActive = (path) => {
     </div>
   </header>
 
-  <UserProfileDrawer
-    v-show="userProfile"
-    :user-profile="authStore.user"
-    @toggleUserProfile="toggleUserProfile"
-  />
+  <UserProfileDrawer :user-profile="authStore.user" v-model="userProfile" />
 </template>

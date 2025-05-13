@@ -1,37 +1,34 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { onMounted, ref } from 'vue'
+import { useUserStore } from '@/stores/userStore'
 import AvatarProfile from '@/components/AvatarProfile.vue'
-
-const employees = ref([])
-const isLoading = ref(false)
+import UserProfileDrawer from '@/components/UserProfileDrawer.vue'
+const userStore = useUserStore()
+const isDrawerVisible = ref(false)
+const selectedEmployee = ref(null)
 
 const columns = [
   { key: 'avatar', label: '' },
   { key: 'name', label: 'ФИО' },
   { key: 'email', label: 'E-mail' },
-  { key: 'position_title', label: 'Должность' },
+  { key: 'position_name', label: 'Должность' },
   { key: 'department_name', label: 'Отдел' },
 ]
 
-const fetchEmployees = async () => {
-  try {
-    isLoading.value = true
-    const response = await axios.get('/api/users')
-    employees.value = response.data.users
-  } catch (err) {
-    console.error('Ошибка при загрузке пользователей:', err)
-  } finally {
-    isLoading.value = false
-  }
+const viewEmployee = async (id) => {
+  await userStore.fetchEmployee(id)
+  selectedEmployee.value = userStore.employee
+  isDrawerVisible.value = true
 }
 
-onMounted(fetchEmployees)
+onMounted(userStore.fetchEmployees)
 </script>
 
 <template>
+  <UserProfileDrawer :user-profile="selectedEmployee" v-model="isDrawerVisible" />
+
   <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-    <div v-if="isLoading" class="p-8 text-center">
+    <div v-if="userStore.isLoading" class="p-8 text-center">
       <div class="animate-pulse flex flex-col space-y-4">
         <div v-for="i in 5" :key="i" class="h-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
       </div>
@@ -51,9 +48,10 @@ onMounted(fetchEmployees)
       </thead>
       <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
         <tr
-          v-for="employee in employees"
+          v-for="employee in userStore.employees"
           :key="employee.id"
           class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
+          @click="viewEmployee(employee.id)"
         >
           <td
             v-for="column in columns"

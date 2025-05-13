@@ -4,7 +4,7 @@ import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Logo from '@/components/Logo.vue'
-import ErrorMessage from '@/components/ErrorMessage.vue'
+import Message from '@/components/Message.vue'
 import TextInput from '@/components/TextInput.vue'
 import Button from '@/components/Button.vue'
 import MailIcon from '@/components/icons/MailIcon.vue'
@@ -14,7 +14,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const email = ref('')
 const password = ref('')
-const error = ref(null)
+const message = ref(null)
 const isLoading = ref(false)
 
 const handleSubmit = async () => {
@@ -30,13 +30,13 @@ const handleSubmit = async () => {
     )
 
     if (response.data.status === 'success') {
-      error.value = null
+      message.value = null
       authStore.setAuthData(response.data.user)
       await nextTick()
       router.push('/dashboard')
     }
   } catch (err) {
-    error.value = err.response.data.message || 'Произошла ошибка при подключении к серверу'
+    message.value = err.response.data.message || 'Произошла ошибка при подключении к серверу'
     isLoading.value = false
   }
 }
@@ -79,7 +79,7 @@ const handleSubmit = async () => {
               required
             />
 
-            <ErrorMessage v-if="error" :error="error" />
+            <Message v-if="message" :message="message" />
 
             <Button textButton="Войти" :isLoading="isLoading" size="big" class="w-full" />
           </form>

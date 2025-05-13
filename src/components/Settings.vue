@@ -1,22 +1,25 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import AvatarProfile from '@/components/AvatarProfile.vue'
 import axios from 'axios'
-import Button from './Button.vue'
-import TextInput from './TextInput.vue'
-import ErrorMessage from './ErrorMessage.vue'
 import { useTheme } from '@/composables/useTheme'
-import BlockMain from './BlockMain.vue'
+import { useAvatarUpload } from '@/composables/useAvatarUpload'
+import { useFormState } from '@/composables/useFormState'
+
+import AvatarProfile from '@/components/AvatarProfile.vue'
+import Button from '@/components//Button.vue'
+import TextInput from '@/components//TextInput.vue'
+import Message from '@/components//Message.vue'
+import BlockMain from '@/components//BlockMain.vue'
+
 const { isDark, toggleTheme } = useTheme()
+
+const { tempAvatar, selectedAvatar, fileInput, handleFileChange, triggerFileInput, resetAvatar } =
+  useAvatarUpload()
+const { isError, message, isLoading, setError, setSuccess, resetState } = useFormState()
 
 const authStore = useAuthStore()
 const userProfile = ref(JSON.parse(JSON.stringify(authStore.user)))
-const fileInput = ref(null)
-const isLoading = ref(false)
-const errorMessage = ref('')
-const tempAvatar = ref(null)
-const selectedAvatar = ref(null)
 const originalProfileData = JSON.parse(JSON.stringify(authStore.user))
 
 const fieldsConfig = computed(() => [
@@ -37,44 +40,12 @@ const hasChanges = computed(() => {
   return tempAvatar.value !== null || hasFieldChanges.value
 })
 
-const handleFileChange = async (event) => {
-  const file = event.target.files[0]
-  if (!file) return
-
-  if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
-    errorMessage.value = 'Пожалуйста, выберите файл изображения (JPEG, PNG или GIF)'
-    return
-  }
-
-  if (file.size > 2 * 1024 * 1024) {
-    errorMessage.value = 'Размер файла не должен превышать 2MB'
-    return
-  }
-
-  try {
-    isLoading.value = true
-    errorMessage.value = ''
-    selectedAvatar.value = file
-
-    tempAvatar.value = URL.createObjectURL(file)
-  } catch (error) {
-    errorMessage.value =
-      error.response?.data?.message || error.message || 'Произошла ошибка при сохранении аватара'
-  } finally {
-    isLoading.value = false
-    if (fileInput.value) {
-      fileInput.value.value = ''
-    }
-  }
-}
-
 const saveChanges = async () => {
   try {
     isLoading.value = true
-    errorMessage.value = ''
+    resetState()
 
     const formData = new FormData()
-
     if (selectedAvatar.value) {
       formData.append('avatar', selectedAvatar.value)
     }
@@ -98,6 +69,8 @@ const saveChanges = async () => {
     })
 
     if (response.data.status === 'success') {
+      setSuccess('Профиль успешно обновлён')
+
       if (response.data.profile) {
         if (response.data.profile.avatar) {
           const freshAvatarUrl = response.data.profile.avatar + '?t=' + Date.now()
@@ -109,13 +82,13 @@ const saveChanges = async () => {
         Object.assign(userProfile.value, authStore.user)
         Object.assign(originalProfileData, JSON.parse(JSON.stringify(authStore.user)))
 
-        tempAvatar.value = null
+        resetAvatar()
       }
     } else {
-      errorMessage.value = 'Не удалось обновить профиль'
+      setError('Не удалось обновить профиль')
     }
   } catch (error) {
-    errorMessage.value = 'Произошла ошибка при сохранении изменений'
+    setError(error.response?.data?.message || 'Произошла ошибка при сохранении изменений')
     console.error(error)
   } finally {
     isLoading.value = false
@@ -127,13 +100,18 @@ const cancelChanges = () => {
     userProfile.value[field.key] = originalProfileData[field.key]
   })
 
-  tempAvatar.value = null
-  selectedAvatar.value = null
-  errorMessage.value = ''
+  resetAvatar()
+  resetState()
 }
 
-const triggerFileInput = () => {
-  fileInput.value.click()
+const handleAvatarChange = async (event) => {
+  const result = handleFileChange(event)
+  if (result?.error) {
+    setError(result.message)
+    if (fileInput.value) {
+      fileInput.value.value = ''
+    }
+  }
 }
 </script>
 
@@ -158,9 +136,10 @@ const triggerFileInput = () => {
             type="file"
             accept="image/jpeg, image/png, image/gif"
             class="hidden"
-            @change="handleFileChange"
+            @change="handleAvatarChange"
           />
         </div>
+
         <TextInput
           v-for="field in fieldsConfig"
           :key="field.key"
@@ -171,7 +150,8 @@ const triggerFileInput = () => {
           class="w-full"
         />
 
-        <ErrorMessage v-if="errorMessage" :error="errorMessage" />
+        <Message v-if="message" :message="message" :error="isError" />
+
         <div class="flex space-x-3 self-end">
           <Button
             textButton="Отмена"
@@ -191,6 +171,7 @@ const triggerFileInput = () => {
         </div>
       </div>
     </BlockMain>
+
     <BlockMain title="Внешний вид" class="max-w-sm w-full">
       <p class="block text-gray-700 text-sm font-bold mb-2 dark:text-gray-200">Тема</p>
       <div class="flex items-center space-x-2">
@@ -226,8 +207,7 @@ const triggerFileInput = () => {
           <span
             class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
             :class="isDark ? 'translate-x-6' : 'translate-x-1'"
-          >
-          </span>
+          />
         </button>
       </div>
     </BlockMain>

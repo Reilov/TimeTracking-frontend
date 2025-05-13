@@ -1,23 +1,6 @@
 <script setup>
 import { ref, computed, defineProps, defineEmits, onMounted, onBeforeUnmount } from 'vue'
 
-const selectedOption = ref(null)
-const emit = defineEmits(['update:modelValue'])
-const isSelectVisible = ref(false)
-const select = ref(null)
-
-const toogleOptionSelected = (option) => {
-  selectedOption.value = option
-  emit('update:modelValue', option.name)
-  closeSelect(option)
-}
-
-const mappedOptions = computed(() => {
-  return (
-    selectedOption.value?.name || selectedOption.value || 'Выберите ' + props.label.toLowerCase()
-  )
-})
-
 const props = defineProps({
   options: {
     type: Array,
@@ -30,6 +13,25 @@ const props = defineProps({
   modelValue: {
     default: null,
   },
+})
+
+// const selectedOption = ref(null)
+const emit = defineEmits(['update:modelValue'])
+const isSelectVisible = ref(false)
+const select = ref(null)
+
+const toogleOptionSelected = (option) => {
+  // selectedOption.value = option
+  emit('update:modelValue', option.id)
+  closeSelect(option)
+}
+
+const selectedOption = computed(() => {
+  return props.options.find((option) => option.id === props.modelValue) || null
+})
+
+const mappedOptions = computed(() => {
+  return selectedOption.value?.name || 'Выберите ' + props.label.toLowerCase()
 })
 
 const closeSelect = (element) => {

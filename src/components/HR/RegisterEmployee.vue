@@ -1,16 +1,19 @@
 <script setup>
+import { ref, computed, reactive, onMounted } from 'vue'
+import axios from 'axios'
+import { useAvatarUpload } from '@/composables/useAvatarUpload'
+import { useFormState } from '@/composables/useFormState'
+
 import AvatarProfile from '@/components/AvatarProfile.vue'
 import Button from '@/components/Button.vue'
 import TextInput from '@/components/TextInput.vue'
-import ErrorMessage from '@/components/ErrorMessage.vue'
+import Message from '@/components/Message.vue'
 import SelectInput from '@/components/SelectInput.vue'
-import { ref, computed, reactive, onMounted } from 'vue'
-import axios from 'axios'
 
-const errorMessage = ref('')
-const isLoading = ref(false)
-const hasChanges = ref(false)
-const showPassword = ref(false)
+// Composables
+const { tempAvatar, selectedAvatar, fileInput, handleFileChange, triggerFileInput, resetAvatar } =
+  useAvatarUpload()
+const { isError, message, isLoading, setError, setSuccess, resetState } = useFormState()
 
 const formData = reactive({
   name: '',
@@ -23,19 +26,9 @@ const formData = reactive({
   about: '',
 })
 
-const generatePassword = () => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let password = ''
-  for (let i = 0; i < 10; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  formData.password = password
-  hasChanges.value = true
-}
-
-const copyPassword = async () => {
-  await navigator.clipboard.writeText(formData.password)
-}
+const showPassword = ref(false)
+const departmentOptions = ref([])
+const positionsOptions = ref([])
 
 const fieldsConfig = computed(() => [
   { key: 'name', label: 'ФИО', type: 'text' },
@@ -45,28 +38,130 @@ const fieldsConfig = computed(() => [
     label: 'Пароль',
     type: showPassword.value ? 'text' : 'password',
   },
-  { key: 'birth_date', label: 'Дата рождения', type: 'date' },
+  { key: 'birth_date', label: 'Дату рождения', type: 'date' },
   { key: 'phone', label: 'Телефон', type: 'tel' },
-  { key: 'department', label: 'Отдел', type: 'select' },
-  { key: 'position', label: 'Должность', type: 'select' },
+  {
+    key: 'department',
+    label: 'Отдел',
+    type: 'select',
+    options: departmentOptions.value,
+  },
+  {
+    key: 'position',
+    label: 'Должность',
+    type: 'select',
+    options: positionsOptions.value,
+  },
   { key: 'about', label: 'Обо мне', type: 'textarea' },
 ])
 
-const departmentOptions = ref([])
-const positionsOptions = ref([])
+const generatePassword = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let password = ''
+  for (let i = 0; i < 10; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  formData.password = password
+}
+
+const copyPassword = async () => {
+  try {
+    await navigator.clipboard.writeText(formData.password)
+    setSuccess('Пароль скопирован в буфер обмена')
+  } catch (error) {
+    setError('Не удалось скопировать пароль')
+  }
+}
 
 onMounted(async () => {
-  const responseDepartments = await axios.get('/api/departments')
-  departmentOptions.value = responseDepartments.data.departments
-  const responsePositions = await axios.get('/api/positions')
-  positionsOptions.value = responsePositions.data.positions
+  try {
+    const [departmentsRes, positionsRes] = await Promise.all([
+      axios.get('/api/departments'),
+      axios.get('/api/positions'),
+    ])
+    departmentOptions.value = departmentsRes.data.departments
+    positionsOptions.value = positionsRes.data.positions
+  } catch (error) {
+    setError('Не удалось загрузить данные отделов и должностей')
+  }
 })
+
+const handleAvatarUpload = async (event) => {
+  const result = handleFileChange(event)
+  if (result?.error) {
+    setError(result.message)
+    if (fileInput.value) {
+      fileInput.value.value = ''
+    }
+  }
+}
+
+const registerEmployee = async () => {
+  try {
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.password ||
+      !formData.department ||
+      !formData.birth_date ||
+      !formData.position
+    ) {
+      setError('Пожалуйста, заполните все обязательные поля')
+      return
+    }
+
+    isLoading.value = true
+    resetState()
+
+    const formDataToSend = new FormData()
+
+    if (selectedAvatar.value) {
+      formDataToSend.append('avatar', selectedAvatar.value)
+    }
+
+    Object.keys(formData).forEach((key) => {
+      formDataToSend.append(key, formData[key])
+    })
+
+    const response = await axios.post('/api/register', formDataToSend, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+
+    if (response.status === 200) {
+      setSuccess('Сотрудник успешно зарегистрирован')
+      setTimeout(() => {
+        resetForm()
+      }, 3000)
+    }
+  } catch (error) {
+    setError(error.response?.data?.message || 'Произошла ошибка при регистрации')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const resetForm = () => {
+  Object.keys(formData).forEach((key) => {
+    if (key === 'department' || key === 'position') {
+      formData[key] = null
+    } else {
+      formData[key] = ''
+    }
+  })
+  resetAvatar()
+  resetState()
+}
 </script>
 
 <template>
   <div class="flex flex-col space-y-4 mb-8">
-    <div class="relative group rounded-full self-center">
-      <AvatarProfile size="big" class="transition-opacity group-hover:opacity-80" />
+    <div class="relative group rounded-full self-center" @click="triggerFileInput">
+      <AvatarProfile
+        size="big"
+        class="transition-opacity group-hover:opacity-80"
+        :avatarText="formData.name[0]"
+        :avatar="tempAvatar"
+      />
       <div
         class="rounded-full cursor-pointer absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
       >
@@ -77,7 +172,7 @@ onMounted(async () => {
         type="file"
         accept="image/jpeg, image/png, image/gif"
         class="hidden"
-        @change="handleFileChange"
+        @change="handleAvatarUpload"
       />
     </div>
 
@@ -89,7 +184,6 @@ onMounted(async () => {
           :type="field.type"
           :placeholder="field.label"
         />
-
         <div class="absolute right-2 top-9 flex space-x-1">
           <Button
             textButton="Сгенерировать"
@@ -125,18 +219,20 @@ onMounted(async () => {
         v-else
         v-model="formData[field.key]"
         :label="field.label"
-        :options="field.key === 'department' ? departmentOptions : positionsOptions"
+        :options="field.options"
       />
     </template>
 
-    <ErrorMessage v-if="errorMessage" :error="errorMessage" />
+    <Message v-if="message" :message="message" :error="isError" />
+
     <div class="flex space-x-3 self-end">
       <Button
         textButton="Сохранить"
         variant="primary"
         :isLoading="isLoading"
-        :disabled="!hasChanges || isLoading"
+        :disabled="isLoading"
         size="big"
+        @click="registerEmployee"
       />
     </div>
   </div>

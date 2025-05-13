@@ -5,9 +5,10 @@ import { computed, defineProps, defineEmits } from 'vue'
 
 defineProps({
   userProfile: Object,
+  modelValue: Boolean,
 })
 
-const emit = defineEmits(['toggleUserProfile'])
+const emit = defineEmits(['update:modelValue'])
 
 const formatDate = (dateString) => {
   if (!dateString) return 'Не указано'
@@ -30,14 +31,20 @@ const fieldsConfig = computed(() => [
     formatter: formatDate,
   },
   { key: 'phone', label: 'Телефон', type: 'tel' },
+  { key: 'department_name', label: 'Отдел', type: 'text' },
+  { key: 'position_name', label: 'Должность', type: 'text' },
   { key: 'about', label: 'Обо мне', type: 'textarea' },
 ])
+
+const closeDrawer = () => {
+  emit('update:modelValue', false)
+}
 </script>
 
 <template>
   <Transition name="slide-fade">
-    <div v-show="userProfile" class="fixed inset-0 z-40">
-      <div class="absolute inset-0 bg-black opacity-50" @click="emit('toggleUserProfile')" />
+    <div v-if="modelValue" class="fixed inset-0 z-40">
+      <div class="absolute inset-0 bg-black opacity-50" @click="closeDrawer()" />
 
       <div
         class="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300 ease-in-out dark:bg-gray-800 dark:text-white"
@@ -47,7 +54,7 @@ const fieldsConfig = computed(() => [
         >
           <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Профиль</h2>
           <button
-            @click="emit('toggleUserProfile')"
+            @click="closeDrawer()"
             class="p-1 rounded-full hover:bg-gray-100 group cursor-pointer dark:hover:bg-gray-700 transition-all"
           >
             <CloseIcon />
