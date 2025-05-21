@@ -1,11 +1,15 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, defineProps } from 'vue'
 import { useUserStore } from '@/stores/userStore'
 import AvatarProfile from '@/components/AvatarProfile.vue'
 import UserProfileDrawer from '@/components/UserProfileDrawer.vue'
 const userStore = useUserStore()
 const isDrawerVisible = ref(false)
 const selectedEmployee = ref(null)
+
+defineProps({
+  isHrView: { type: Boolean, default: false },
+})
 
 const columns = [
   { key: 'avatar', label: '' },
@@ -21,11 +25,37 @@ const viewEmployee = async (id) => {
   isDrawerVisible.value = true
 }
 
+const statusClass = (status) => {
+  switch (status) {
+    case 'active':
+      return 'bg-green-700'
+    case 'paused':
+      return 'bg-orange-400'
+    default:
+      return 'bg-red-500'
+  }
+}
+
+const statusTitle = (status) => {
+  switch (status) {
+    case 'active':
+      return 'Работает'
+    case 'paused':
+      return 'На перерыве'
+    default:
+      return 'Неактивен'
+  }
+}
+
 onMounted(userStore.fetchEmployees)
 </script>
 
 <template>
-  <UserProfileDrawer :user-profile="selectedEmployee" v-model="isDrawerVisible" />
+  <UserProfileDrawer
+    :user-profile="selectedEmployee"
+    v-model="isDrawerVisible"
+    :isHrView="isHrView"
+  />
 
   <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
     <div v-if="userStore.isLoading" class="p-8 text-center">
@@ -64,16 +94,24 @@ onMounted(userStore.fetchEmployees)
             ]"
           >
             <template v-if="column.key === 'avatar'">
-              <AvatarProfile
-                :avatar="employee.avatar"
-                :avatar-text="employee.name[0]"
-                size="small"
-              />
+              <div class="relative inline-block">
+                <AvatarProfile
+                  :avatar="employee.avatar"
+                  :avatar-text="employee.name[0]"
+                  size="small"
+                />
+                <span
+                  class="absolute w-4 h-4 bottom-0 right-0 rounded-full"
+                  :title="statusTitle(employee.status)"
+                  :class="statusClass(employee.status)"
+                ></span>
+              </div>
             </template>
             <template v-else>
               {{ employee[column.key] || '—' }}
             </template>
           </td>
+          <slot name="hr"></slot>
         </tr>
       </tbody>
     </table>

@@ -68,7 +68,7 @@ const copyPassword = async () => {
   try {
     await navigator.clipboard.writeText(formData.password)
     setSuccess('Пароль скопирован в буфер обмена')
-  } catch (error) {
+  } catch {
     setError('Не удалось скопировать пароль')
   }
 }
@@ -81,7 +81,7 @@ onMounted(async () => {
     ])
     departmentOptions.value = departmentsRes.data.departments
     positionsOptions.value = positionsRes.data.positions
-  } catch (error) {
+  } catch {
     setError('Не удалось загрузить данные отделов и должностей')
   }
 })

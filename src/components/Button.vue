@@ -18,7 +18,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'primary',
-    validator: (value) => ['primary', 'secondary', 'primaryMinimal'].includes(value),
+    validator: (value) => ['primary', 'secondary', 'primaryMinimal', 'outline'].includes(value),
   },
 })
 
@@ -34,6 +34,7 @@ const buttonClasses = computed(() => {
       'bg-gray-100 hover:bg-gray-200 transition-all dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white',
     primaryMinimal:
       'bg-orange-500 text-white hover:bg-orange-600 transition-all dark:bg-orange-600 dark:hover:bg-orange-700',
+    outline: 'border border-gray-300 hover:border-orange-500 transition-all dark:border-gray-600',
   }
   return [sizes[props.size], variants[props.variant]]
 })
@@ -42,7 +43,7 @@ const buttonClasses = computed(() => {
 <template>
   <button
     type="submit"
-    class="cursor-pointer font-semibold flex justify-center items-center rounded-lg border border-transparent shadow-sm transition-all duration-200 transition-colors ease-in-out"
+    class="cursor-pointer font-semibold flex justify-center items-center border-transparent rounded-lg border shadow-sm transition-all duration-200 transition-colors ease-in-out"
     :class="buttonClasses"
     :disabled="isLoading"
   >

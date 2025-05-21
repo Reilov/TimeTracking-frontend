@@ -6,7 +6,7 @@ import Header from '@/components/Header.vue'
 <template>
   <div class="relative">
     <Header />
-    <main class="pt-6">
+    <main>
       <router-view />
     </main>
   </div>

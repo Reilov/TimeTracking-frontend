@@ -1,22 +1,19 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { useRoute } from 'vue-router'
 import AvatarProfile from '@/components/AvatarProfile.vue'
 import UserProfileDrawer from '@/components/UserProfileDrawer.vue'
 import Logo from '@/components/Logo.vue'
 import MenuProfile from '@/components/MenuProfile.vue'
+import NavTabs from './NavTabs.vue'
 
 const authStore = useAuthStore()
-
-const route = useRoute()
-
 const userProfileMenu = ref(false)
 const userProfile = ref(false)
 
 const baseNavItems = [
   { path: '/', name: 'Главная' },
-  { path: '/users', name: 'Пользователи' },
+  { path: '/users', name: 'Сотрудники' },
 ]
 
 const hrNavItem = {
@@ -39,10 +36,6 @@ const toggleUserProfile = () => {
   userProfileMenu.value = false
   userProfile.value = !userProfile.value
 }
-
-const isActive = (path) => {
-  return route.path === path
-}
 </script>
 
 <template>
@@ -53,18 +46,11 @@ const isActive = (path) => {
       <Logo />
 
       <nav class="hidden md:flex gap-4">
-        <router-link
-          v-for="item in navItems"
-          :key="item.path"
-          :to="item.path"
-          class="px-2 py-1 relative transition-all"
-        >
-          {{ item.name }}
-          <span
-            v-if="isActive(item.path)"
-            class="absolute left-1/2 bottom-0 w-4/5 h-0.5 bg-orange-500 transform -translate-x-1/2"
-          ></span>
-        </router-link>
+        <NavTabs
+          :items="navItems.map((item) => ({ id: item.path, label: item.name, path: item.path }))"
+          :active-item="$route.path"
+          type="router-link"
+        />
       </nav>
     </div>
 
@@ -76,8 +62,8 @@ const isActive = (path) => {
         <AvatarProfile :avatar="authStore.user.avatar" :avatar-text="authStore.user?.name[0]" />
         <div class="flex flex-col">
           <span class="text-base md:text-lg">{{ authStore.user?.name }}</span>
-          <span class="text-gray-400 text-xs" v-if="authStore.user?.position">
-            {{ authStore.user?.position }}
+          <span class="text-gray-400 text-xs" v-if="authStore.user?.position_name">
+            {{ authStore.user?.position_name }}
           </span>
         </div>
       </div>

@@ -4,7 +4,7 @@ import UsersList from '@/components/UsersList.vue'
 </script>
 
 <template>
-  <BlockMain title="Пользователи">
+  <BlockMain title="Сотрудники">
     <UsersList />
   </BlockMain>
 </template>

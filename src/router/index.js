@@ -39,7 +39,7 @@ const router = createRouter({
           path: 'users',
           name: 'Users',
           component: Users,
-          meta: { title: 'Пользователи' },
+          meta: { title: 'Сотрудники' },
         },
         {
           path: 'hr',
@@ -51,6 +51,9 @@ const router = createRouter({
               path: '',
               name: 'UsersList',
               component: UsersList,
+              props: {
+                isHrView: true, // статическое значение
+              },
             },
             {
               path: 'new-employee',

@@ -16,6 +16,7 @@ const email = ref('')
 const password = ref('')
 const message = ref(null)
 const isLoading = ref(false)
+const error = ref(false)
 
 const handleSubmit = async () => {
   try {
@@ -31,11 +32,13 @@ const handleSubmit = async () => {
 
     if (response.data.status === 'success') {
       message.value = null
+      error.value = false
       authStore.setAuthData(response.data.user)
       await nextTick()
       router.push('/dashboard')
     }
   } catch (err) {
+    error.value = true
     message.value = err.response.data.message || 'Произошла ошибка при подключении к серверу'
     isLoading.value = false
   }
@@ -79,7 +82,7 @@ const handleSubmit = async () => {
               required
             />
 
-            <Message v-if="message" :message="message" />
+            <Message v-if="message" :message="message" :error="error" />
 
             <Button textButton="Войти" :isLoading="isLoading" size="big" class="w-full" />
           </form>
