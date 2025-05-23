@@ -111,7 +111,7 @@ onMounted(userStore.fetchEmployees)
               {{ employee[column.key] || '—' }}
             </template>
           </td>
-          <slot name="hr"></slot>
+          <slot name="hr" :id="employee.id"></slot>
         </tr>
       </tbody>
     </table>

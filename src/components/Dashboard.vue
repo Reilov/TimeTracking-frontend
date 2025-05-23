@@ -1,12 +1,16 @@
 <script setup>
 import Timer from '@/components/Timer.vue'
 import EmployeeHoursChart from '@/components/EmployeeHoursChart.vue'
-import axios from 'axios'
+import StatsBlock from '@/components/StatsBlock.vue'
 import BlockMain from '@/components/BlockMain.vue'
+
+import axios from 'axios'
+
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
-import StatsBlock from './StatsBlock.vue'
+import { useFormatters } from '@/composables/useFormatters'
+const { getWorkdayComparison, declensionDays } = useFormatters()
 
 const authStore = useAuthStore()
 const timeRecords = ref([])
@@ -30,18 +34,6 @@ const fetchTimeStats = async () => {
     console.error(err)
   }
 }
-
-const declensionDays = (count) => {
-  const cases = [2, 0, 1, 1, 1, 2]
-  const words = ['день', 'дня', 'дней']
-  return words[count % 100 > 4 && count % 100 < 20 ? 2 : cases[Math.min(count % 10, 5)]]
-}
-const getWorkdayComparison = (hours) => {
-  if (hours < 6) return 'Меньше стандартного рабочего дня'
-  if (hours > 9) return 'Больше стандартного рабочего дня'
-  return 'Стандартный рабочий день'
-}
-
 onMounted(fetchTimeStats)
 </script>
 

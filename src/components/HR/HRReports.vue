@@ -49,7 +49,7 @@ const typeStats = [
             { id: 'month', name: 'Месяц' },
             { id: 'quarter', name: 'Квартал' },
             { id: 'year', name: 'Год' },
-            { id: 'custom', name: 'Произвольный' },
+            { id: 'custom', name: 'Пользовательский' },
           ]"
         />
       </div>

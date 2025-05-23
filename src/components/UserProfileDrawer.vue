@@ -6,7 +6,7 @@ import NavTabs from '@/components/NavTabs.vue'
 import { ref, computed, defineProps, defineEmits, watch, onBeforeUnmount } from 'vue'
 import EmployeeHoursChart from '@/components/EmployeeHoursChart.vue'
 import { useFormatters } from '@/composables/useFormatters'
-const { formatDate } = useFormatters()
+const { formatDate, getWorkdayComparison, declensionDays } = useFormatters()
 import StatsBlock from '@/components/StatsBlock.vue'
 const props = defineProps({
   userProfile: Object,
@@ -38,17 +38,6 @@ const toggleBodyScroll = (isOpen) => {
 
 watch(() => props.modelValue, toggleBodyScroll)
 onBeforeUnmount(() => toggleBodyScroll(false))
-
-const declensionDays = (count) => {
-  const cases = [2, 0, 1, 1, 1, 2]
-  const words = ['день', 'дня', 'дней']
-  return words[count % 100 > 4 && count % 100 < 20 ? 2 : cases[Math.min(count % 10, 5)]]
-}
-const getWorkdayComparison = (hours) => {
-  if (hours < 6) return 'Меньше стандартного рабочего дня'
-  if (hours > 9) return 'Больше стандартного рабочего дня'
-  return 'Стандартный рабочий день'
-}
 </script>
 
 <template>
@@ -72,7 +61,7 @@ const getWorkdayComparison = (hours) => {
             </button>
           </div>
         </div>
-        <!-- Только для HR -->
+
         <div class="px-3">
           <NavTabs
             v-if="isHrView"
@@ -157,7 +146,6 @@ const getWorkdayComparison = (hours) => {
 </template>
 
 <style scoped>
-/* Стили остаются без изменений */
 .slide-fade-enter-active,
 .slide-fade-leave-active {
   transition: opacity 0.3s ease;

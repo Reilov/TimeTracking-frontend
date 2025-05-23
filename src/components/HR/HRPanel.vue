@@ -2,9 +2,12 @@
 import Button from '../Button.vue'
 import BlockMain from '../BlockMain.vue'
 import { useRouter } from 'vue-router'
-import HREditProfile from './HREditProfile.vue'
 
 const router = useRouter()
+
+const editEmployee = (id) => {
+  router.push({ name: 'HREditProfile', params: { id } })
+}
 </script>
 
 <template>
@@ -12,12 +15,12 @@ const router = useRouter()
     <template #header-actions>
       <Button @click="router.push({ name: 'NewEmployee' })" text-button="Добавить сотрудника" />
     </template>
-    <!-- <HREditProfile :employee-id="32" /> -->
+
     <router-view v-slot="{ Component }">
       <component :is="Component">
-        <template #hr>
+        <template #hr="{ id }">
           <td>
-            <Button text-button="Редактировать" class="mx-auto" />
+            <Button @click.stop="editEmployee(id)" text-button="Редактировать" class="mx-auto" />
           </td>
         </template>
       </component>

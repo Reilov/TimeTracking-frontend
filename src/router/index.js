@@ -52,7 +52,7 @@ const router = createRouter({
               name: 'UsersList',
               component: UsersList,
               props: {
-                isHrView: true, // статическое значение
+                isHrView: true,
               },
             },
             {
@@ -60,6 +60,13 @@ const router = createRouter({
               name: 'NewEmployee',
               component: () => import('@/components/HR/RegisterEmployee.vue'),
               meta: { title: 'Новый сотрудник' },
+            },
+            {
+              path: 'edit/:id',
+              name: 'HREditProfile',
+              component: () => import('@/components/HR/HREditProfile.vue'),
+              meta: { title: 'Редактирование сотрудника' },
+              props: (route) => ({ employeeId: route.params.id }),
             },
           ],
         },

@@ -4,7 +4,6 @@ import axios from 'axios'
 import { useAvatarUpload } from '@/composables/useAvatarUpload'
 import { useFormState } from '@/composables/useFormState'
 
-// Components
 import AvatarProfile from '@/components/AvatarProfile.vue'
 import Button from '@/components/Button.vue'
 import TextInput from '@/components/TextInput.vue'
@@ -18,12 +17,10 @@ const props = defineProps({
   },
 })
 
-// Composables
 const { tempAvatar, selectedAvatar, fileInput, handleFileChange, triggerFileInput } =
   useAvatarUpload()
 const { isError, message, isLoading, setError, setSuccess, resetState } = useFormState()
 
-// Employee data
 const formData = reactive({
   name: '',
   email: '',
@@ -34,9 +31,10 @@ const formData = reactive({
   about: '',
 })
 
+const originalData = ref({})
 const departmentOptions = ref([])
 const positionOptions = ref([])
-// Load employee data
+
 const loadEmployeeData = async () => {
   try {
     isLoading.value = true
@@ -46,12 +44,19 @@ const loadEmployeeData = async () => {
       axios.get('/api/positions'),
     ])
 
-    Object.assign(formData, employeeRes.data.user)
+    // Преобразуем данные для совместимости с SelectInput
+    const userData = employeeRes.data.user
+    userData.department_id = userData.department_id ? Number(userData.department_id) : null
+    userData.position_id = userData.position_id ? Number(userData.position_id) : null
+
+    Object.assign(formData, userData)
+    originalData.value = JSON.parse(JSON.stringify(userData))
 
     departmentOptions.value = departmentsRes.data.departments
     positionOptions.value = positionsRes.data.positions
   } catch (error) {
     setError('Не удалось загрузить данные сотрудника')
+    console.error('Ошибка загрузки данных:', error)
   } finally {
     isLoading.value = false
   }
@@ -59,47 +64,87 @@ const loadEmployeeData = async () => {
 
 // Handle avatar upload
 const handleAvatarUpload = async (event) => {
-  const result = handleFileChange(event)
-  if (result?.error) {
-    setError(result.message)
-    if (fileInput.value) fileInput.value.value = ''
+  try {
+    const result = handleFileChange(event)
+    if (result?.error) {
+      setError(result.message)
+      if (fileInput.value) fileInput.value.value = ''
+    }
+  } catch (error) {
+    setError('Ошибка при обработке изображения')
+    console.error('Avatar upload error:', error)
   }
 }
 
-// Save changes
 const saveChanges = async () => {
   try {
     isLoading.value = true
     resetState()
 
     const formDataToSend = new FormData()
+    const changes = {}
 
+    const fields = ['name', 'email', 'birth_date', 'phone', 'about', 'department_id', 'position_id']
+
+    // Собираем только измененные поля
+    fields.forEach((field) => {
+      if (JSON.stringify(formData[field]) !== JSON.stringify(originalData.value[field])) {
+        changes[field] = formData[field]
+      }
+    })
+
+    if (Object.keys(changes).length === 0 && !selectedAvatar.value) {
+      setSuccess('Нет изменений для сохранения')
+      return
+    }
+
+    // Добавляем аватар если есть
     if (selectedAvatar.value) {
       formDataToSend.append('avatar', selectedAvatar.value)
     }
 
-    formDataToSend.append('employeeData', JSON.stringify(formData))
+    // Добавляем измененные данные если есть
+    if (Object.keys(changes).length > 0) {
+      formDataToSend.append('employeeData', JSON.stringify(changes))
+    }
 
-    const response = await axios.post(`'/api/update-profile/${props.employeeId}`, formDataToSend, {
+    const response = await axios.post(`/api/update-profile/${props.employeeId}`, formDataToSend, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
 
-    setSuccess('Данные сотрудника успешно обновлены')
+    if (response.data.status === 'success') {
+      setSuccess('Данные сотрудника успешно обновлены')
 
-    // Update local data
-    if (response.data.employee) {
-      Object.assign(formData, response.data.employee)
+      if (response.data.profile) {
+        // Приводим типы для select-полей
+        const profileData = response.data.profile
+        console.log(profileData)
+
+        Object.assign(originalData.value, profileData)
+        Object.assign(formData, profileData)
+      }
+
+      if (response.data.profile?.avatar) {
+        tempAvatar.value = null
+        selectedAvatar.value = null
+      }
+    } else {
+      setError(response.data.message || 'Ошибка при обновлении данных')
     }
   } catch (error) {
-    setError(error.response?.data?.message || 'Ошибка при обновлении данных')
+    const errorMessage =
+      error.response?.data?.message || error.response?.data?.error || 'Ошибка при обновлении данных'
+    setError(errorMessage)
+    console.error('Save changes error:', error)
   } finally {
     isLoading.value = false
   }
 }
 
-// Reset form to initial state
 const resetForm = () => {
-  loadEmployeeData()
+  Object.assign(formData, originalData.value)
+  tempAvatar.value = null
+  selectedAvatar.value = null
   resetState()
 }
 
@@ -109,8 +154,8 @@ onMounted(() => {
 </script>
 
 <template>
+  <Button textButton="Вернуться назад" variant="primary" size="big" @click="resetForm" />
   <div class="flex flex-col space-y-4 mb-8">
-    <!-- Avatar Upload -->
     <div class="relative group rounded-full self-center" @click="triggerFileInput">
       <AvatarProfile
         size="big"
@@ -132,7 +177,6 @@ onMounted(() => {
       />
     </div>
 
-    <!-- Basic Info -->
     <TextInput v-model="formData.name" label="ФИО" type="text" placeholder="Введите ФИО" required />
 
     <TextInput
@@ -143,26 +187,22 @@ onMounted(() => {
       required
     />
 
-    <!-- HR Specific Fields -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <SelectInput
-        v-model="formData.department_id"
-        label="Отдел"
-        :options="departmentOptions"
-        required
-      />
+    <SelectInput
+      v-model="formData.department_id"
+      label="Отдел"
+      :options="departmentOptions"
+      required
+    />
 
-      <SelectInput
-        v-model="formData.position_id"
-        label="Должность"
-        :options="positionOptions"
-        required
-      />
+    <SelectInput
+      v-model="formData.position_id"
+      label="Должность"
+      :options="positionOptions"
+      required
+    />
 
-      <TextInput v-model="formData.birth_date" label="Дата рождения" type="date" />
-    </div>
+    <TextInput v-model="formData.birth_date" label="Дата рождения" type="date" />
 
-    <!-- Additional Info -->
     <TextInput v-model="formData.phone" label="Телефон" type="tel" placeholder="Введите телефон" />
 
     <TextInput
@@ -172,10 +212,8 @@ onMounted(() => {
       placeholder="Дополнительная информация"
     />
 
-    <!-- Messages -->
     <Message v-if="message" :message="message" :error="isError" />
 
-    <!-- Actions -->
     <div class="flex space-x-3 self-end">
       <Button textButton="Отменить изменения" variant="secondary" size="big" @click="resetForm" />
       <Button

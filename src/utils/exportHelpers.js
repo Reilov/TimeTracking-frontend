@@ -2,216 +2,168 @@ import * as XLSX from 'xlsx'
 import { jsPDF } from 'jspdf'
 import '@/fonts/Roboto-Regular-normal'
 
-export function exportToCsv(data, filename = 'report.csv') {
-  if (!data || !data.stats || !data.stats.length) {
-    console.error('No data to export')
-    return
+// Общие функции форматирования
+const formatHours = (seconds) => (seconds / 3600).toFixed(2)
+const formatSeconds = (seconds) => seconds.toString()
+
+// Общая структура данных для экспорта
+const prepareExportData = (data) => {
+  return {
+    header: {
+      title: 'Отчет о рабочем времени',
+      employee: data.userName || 'Не указано',
+      period: data.period || 'Не указано',
+      dates: `${data.start_date || ''} - ${data.end_date || ''}`,
+      summary: {
+        days: data.working_days_count || '',
+        totalHours: data.total_hours || '',
+        avgHours: data.avg_hours || '',
+      },
+    },
+    details: data.stats.map((item) => ({
+      date: item.date,
+      hours: formatHours(item.total_worked_seconds),
+      seconds: formatSeconds(item.total_worked_seconds),
+    })),
   }
+}
 
-  // 1. Подготовка данных
-  const csvData = []
+export function exportToCsv(data, filename = 'report.csv') {
+  const exportData = prepareExportData(data)
+  const csvRows = []
 
-  // 2. Добавляем заголовок отчета
-  csvData.push('Отчет о рабочем времени')
-  csvData.push('') // Пустая строка
+  // Заголовок
+  csvRows.push(exportData.header.title)
+  csvRows.push('')
 
-  // 3. Основная информация
-  csvData.push('Основная информация:')
-  csvData.push(
+  // Основная информация
+  csvRows.push('Основная информация:')
+  csvRows.push('Сотрудник,Период,Даты,Рабочих дней,Всего часов,Среднее в день')
+  csvRows.push(
     [
-      'Сотрудник',
-      'Период',
-      'Дата начала',
-      'Дата окончания',
-      'Рабочих дней',
-      'Всего часов',
-      'Среднее в день',
+      `"${exportData.header.employee}"`,
+      `"${exportData.header.period}"`,
+      `"${exportData.header.dates}"`,
+      exportData.header.summary.days,
+      exportData.header.summary.totalHours,
+      exportData.header.summary.avgHours,
     ].join(','),
   )
 
-  csvData.push(
-    [
-      `"${data.userName || ''}"`,
-      `"${data.period || ''}"`,
-      `"${data.start_date || ''}"`,
-      `"${data.end_date || ''}"`,
-      data.working_days_count || '',
-      data.total_hours || '',
-      data.avg_hours || '',
-    ].join(','),
-  )
+  csvRows.push('')
 
-  csvData.push('') // Пустая строка
-
-  // 4. Детализация по дням
-  csvData.push('Детализация по дням:')
-  csvData.push(['Дата', 'Отработано часов', 'Отработано секунд'].join(','))
-
-  // 5. Добавляем данные по дням
-  data.stats.forEach((item) => {
-    csvData.push(
-      [
-        `"${item.date}"`,
-        (item.total_worked_seconds / 3600).toFixed(2),
-        item.total_worked_seconds,
-      ].join(','),
-    )
+  // Детализация
+  csvRows.push('Детализация по дням:')
+  csvRows.push('Дата,Часы,Секунды')
+  exportData.details.forEach((item) => {
+    csvRows.push([`"${item.date}"`, item.hours, item.seconds].join(','))
   })
 
-  // 6. Собираем весь CSV
-  const csvContent = csvData.join('\n')
-
-  // 7. Создаем и скачиваем файл
-  const blob = new Blob(['\uFEFF' + csvContent], {
+  // Создание и скачивание файла
+  const blob = new Blob(['\uFEFF' + csvRows.join('\n')], {
     type: 'text/csv;charset=utf-8;',
   })
-
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
   link.download = filename
-  link.style.display = 'none'
-
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
 }
 
 export function exportToExcel(data, filename = 'report.xlsx') {
-  if (!data || !data.stats || !data.stats.length) {
-    console.error('No data to export')
-    return
-  }
-
-  // Преобразуем секунды в часы для лучшей читаемости
-  const statsWithHours = data.stats.map((item) => ({
-    Date: item.date,
-    'Всего отработано (часы)': (item.total_worked_seconds / 3600).toFixed(2),
-    'Всего отработано (секунды)': item.total_worked_seconds,
-  }))
-
-  // Создаем основной лист с данными
-  const worksheet = XLSX.utils.json_to_sheet(statsWithHours)
-
-  // Добавляем сводную информацию в начало листа
-  XLSX.utils.sheet_add_aoa(
-    worksheet,
-    [
-      ['Сотрудник', data.userName, '', ''],
-      ['Отчет о рабочем времени', '', '', ''],
-      ['Период:', data.period, '', ''],
-      ['Дата начала:', data.start_date, 'Дата окончания:', data.end_date],
-      ['Всего рабочих дней:', data.working_days_count, '', ''],
-      ['Всего часов:', data.total_hours, 'Среднее количество часов в день:', data.avg_hours],
-      ['', '', '', ''],
-      ['Подробные данные', '', '', ''],
-    ],
-    { origin: 'A1' },
-  )
-
-  // Стилизуем заголовки
+  const exportData = prepareExportData(data)
   const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, worksheet, 'Отчет о работе')
 
-  // Добавляем второй лист с общей информацией (если нужно)
-  const summarySheet = XLSX.utils.aoa_to_sheet([
-    ['Сводная информация', ''],
-    ['Тип периода', data.period],
-    ['Дата начала', data.start_date],
-    ['Дата окончания', data.end_date],
-    ['Всего рабочих дней', data.working_days_count],
-    ['Всего отработанных часов', data.total_hours],
-    ['Среднее количество часов в день', data.avg_hours],
+  // Основной лист с детализацией
+  const wsData = [
+    [exportData.header.title],
+    [],
+    ['Основная информация:', '', '', '', '', ''],
+    ['Сотрудник:', exportData.header.employee],
+    ['Период:', exportData.header.period],
+    ['Даты:', exportData.header.dates],
+    ['Рабочих дней:', exportData.header.summary.days],
+    ['Всего часов:', exportData.header.summary.totalHours],
+    ['Среднее в день:', exportData.header.summary.avgHours],
+    [],
+    ['Детализация по дням:', '', ''],
+    ['Дата', 'Часы', 'Секунды'],
+    ...exportData.details.map((item) => [item.date, item.hours, item.seconds]),
+  ]
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData)
+  XLSX.utils.book_append_sheet(wb, ws, 'Отчет')
+
+  // Лист с суммарной информацией
+  const summaryWs = XLSX.utils.aoa_to_sheet([
+    ['Сводная информация'],
+    [],
+    ['Сотрудник', exportData.header.employee],
+    ['Период', exportData.header.period],
+    ['Даты', exportData.header.dates],
+    ['Рабочих дней', exportData.header.summary.days],
+    ['Всего часов', exportData.header.summary.totalHours],
+    ['Среднее в день', exportData.header.summary.avgHours],
   ])
-  XLSX.utils.book_append_sheet(wb, summarySheet, 'Сводка')
+  XLSX.utils.book_append_sheet(wb, summaryWs, 'Сводка')
 
-  // Записываем файл
   XLSX.writeFile(wb, filename)
 }
 
 export function exportToPdf(data, filename = 'report.pdf') {
-  if (!data || !data.stats || !data.stats.length) {
-    console.error('No data to export')
-    return
-  }
+  const exportData = prepareExportData(data)
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm' })
 
-  const doc = new jsPDF({
-    orientation: 'portrait', // Изменил на portrait для лучшего отображения
-    unit: 'mm',
-  })
-
-  // Убедимся, что шрифт загружен и доступен
+  // Настройки документа
   doc.setFont('Roboto-Regular', 'normal')
+  let startY = 15
 
   // Заголовок
   doc.setFontSize(16)
-  doc.text('Отчет о рабочем времени', 105, 15, { align: 'center' })
+  doc.text(exportData.header.title, 105, startY, { align: 'center' })
+  startY += 10
 
-  // Информация о сотруднике и периоде
+  // Основная информация
   doc.setFontSize(12)
-  doc.text(`Сотрудник: ${data.userName || 'Не указано'}`, 15, 25)
-  doc.text(
-    `Период: ${data.period || 'Не указано'} (${data.start_date || ''} - ${data.end_date || ''})`,
-    15,
-    32,
-  )
+  doc.text(`Сотрудник: ${exportData.header.employee}`, 15, startY)
+  startY += 7
+  doc.text(`Период: ${exportData.header.period} (${exportData.header.dates})`, 15, startY)
+  startY += 7
+  doc.text(`Рабочих дней: ${exportData.header.summary.days}`, 15, startY)
+  startY += 7
+  doc.text(`Всего часов: ${exportData.header.summary.totalHours}`, 15, startY)
+  startY += 7
+  doc.text(`Среднее в день: ${exportData.header.summary.avgHours}`, 15, startY)
+  startY += 15
 
-  // Настройки таблицы
-  const startX = 15
-  let startY = 45
-  const rowHeight = 10
-  const colWidths = [30, 40, 40] // Подкорректировал ширину колонок
+  // Таблица с детализацией
+  const colWidths = [40, 40, 40]
+  const headers = ['Дата', 'Часы', 'Секунды']
 
   // Заголовки таблицы
-  const headers = ['Дата', 'Отработано часов', 'Отработано секунд']
-
-  // Рисуем заголовки
   headers.forEach((header, i) => {
-    doc.setFillColor(240, 240, 240) // Серый фон для заголовков
-    doc.rect(
-      startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0),
-      startY,
-      colWidths[i],
-      rowHeight,
-      'F',
-    ) // 'F' означает fill
-    doc.setTextColor(0, 0, 0)
-    doc.text(header, startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 2, startY + 7)
+    doc.setFillColor(240, 240, 240)
+    doc.rect(15 + colWidths.slice(0, i).reduce((a, b) => a + b, 0), startY, colWidths[i], 10, 'F')
+    doc.text(header, 17 + colWidths.slice(0, i).reduce((a, b) => a + b, 0), startY + 7)
   })
-
-  startY += rowHeight
+  startY += 10
 
   // Данные таблицы
-  data.stats.forEach((item) => {
-    const values = [
-      item.date,
-      (item.total_worked_seconds / 3600).toFixed(2) + ' ч',
-      item.total_worked_seconds + ' сек',
-    ]
+  exportData.details.forEach((item) => {
+    const values = [item.date, item.hours + ' ч', item.seconds + ' сек']
 
-    // Рисуем строку данных
     values.forEach((val, i) => {
-      doc.rect(
-        startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0),
-        startY,
-        colWidths[i],
-        rowHeight,
-      )
-      doc.text(
-        String(val),
-        startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 2,
-        startY + 7,
-      )
+      doc.rect(15 + colWidths.slice(0, i).reduce((a, b) => a + b, 0), startY, colWidths[i], 10)
+      doc.text(val, 17 + colWidths.slice(0, i).reduce((a, b) => a + b, 0), startY + 7)
     })
 
-    startY += rowHeight
-
-    // Проверка на необходимость новой страницы
-    if (startY > doc.internal.pageSize.height - 20) {
+    startY += 10
+    if (startY > 280) {
       doc.addPage()
       startY = 20
     }
   })
 
-  // Сохраняем PDF
   doc.save(filename)
 }

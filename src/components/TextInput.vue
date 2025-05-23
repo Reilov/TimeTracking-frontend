@@ -39,7 +39,7 @@ defineEmits(['update:modelValue'])
         :type="type"
         :placeholder="placeholder"
         @input="$emit('update:modelValue', $event.target.value)"
-        class="cursor-pointer w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent transition-all dark:border-gray-600 dark:focus:border-transparent"
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent transition-all dark:border-gray-600 dark:focus:border-transparent"
       />
 
       <textarea
@@ -48,7 +48,7 @@ defineEmits(['update:modelValue'])
         :placeholder="placeholder"
         @input="$emit('update:modelValue', $event.target.value)"
         rows="3"
-        class="cursor-pointer w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent transition-all dark:border-gray-600 dark:focus:border-transparent"
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent transition-all dark:border-gray-600 dark:focus:border-transparent"
       ></textarea>
 
       <span v-if="icon" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400">

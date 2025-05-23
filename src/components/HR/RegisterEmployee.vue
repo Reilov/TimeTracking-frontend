@@ -28,7 +28,7 @@ const formData = reactive({
 
 const showPassword = ref(false)
 const departmentOptions = ref([])
-const positionsOptions = ref([])
+const positionOptions = ref([])
 
 const fieldsConfig = computed(() => [
   { key: 'name', label: 'ФИО', type: 'text' },
@@ -50,7 +50,7 @@ const fieldsConfig = computed(() => [
     key: 'position',
     label: 'Должность',
     type: 'select',
-    options: positionsOptions.value,
+    options: positionOptions.value,
   },
   { key: 'about', label: 'Обо мне', type: 'textarea' },
 ])
@@ -80,7 +80,7 @@ onMounted(async () => {
       axios.get('/api/positions'),
     ])
     departmentOptions.value = departmentsRes.data.departments
-    positionsOptions.value = positionsRes.data.positions
+    positionOptions.value = positionsRes.data.positions
   } catch {
     setError('Не удалось загрузить данные отделов и должностей')
   }

@@ -28,6 +28,12 @@ export function useExport() {
         ...queryParams,
       })
 
+      if (!fetchData?.stats?.length) {
+        errorMessage.value = 'Нет данных для экспорта'
+        console.error('No data to export')
+        return
+      }
+
       const { formatDate } = useFormatters()
 
       const formattedData = {
