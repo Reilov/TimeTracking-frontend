@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 import { useAvatarUpload } from '@/composables/useAvatarUpload'
 import { useFormState } from '@/composables/useFormState'
 
@@ -76,8 +76,8 @@ const copyPassword = async () => {
 onMounted(async () => {
   try {
     const [departmentsRes, positionsRes] = await Promise.all([
-      axios.get('/api/departments'),
-      axios.get('/api/positions'),
+      api.get('/departments'),
+      api.get('/positions'),
     ])
     departmentOptions.value = departmentsRes.data.departments
     positionOptions.value = positionsRes.data.positions
@@ -123,7 +123,7 @@ const registerEmployee = async () => {
       formDataToSend.append(key, formData[key])
     })
 
-    const response = await axios.post('/api/register', formDataToSend, {
+    const response = await api.post('/register', formDataToSend, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
 

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 import Button from '@/components/Button.vue'
 
 const props = defineProps({
@@ -43,7 +43,7 @@ const formattedTime = computed(() => {
 
 onMounted(async () => {
   try {
-    const response = await axios.get('/api/sessions/active', {
+    const response = await api.get('/sessions/active', {
       params: { user_id: props.userId },
       withCredentials: true,
     })
@@ -63,13 +63,13 @@ const startTimer = async () => {
   if (isRunning.value) return
 
   try {
-    const sessionResponse = await axios.get('/api/sessions/active', {
+    const sessionResponse = await api.get('/sessions/active', {
       params: { user_id: props.userId },
     })
     if (sessionResponse.data.active) {
       elapsedTime.value = sessionResponse.data.elapsed_seconds
     } else {
-      await axios.post('/api/sessions', {
+      await api.post('/sessions', {
         action: 'start',
         user_id: props.userId,
         elapsed_seconds: 0,
@@ -85,7 +85,7 @@ const startTimer = async () => {
 
 const pauseTimer = async () => {
   try {
-    await axios.post('/api/sessions', {
+    await api.post('/sessions', {
       action: 'pause',
       user_id: props.userId,
       elapsed_seconds: elapsedTime.value,
@@ -103,7 +103,7 @@ const stopTimer = async () => {
   isRunning.value = false
 
   try {
-    await axios.post('/api/sessions', {
+    await api.post('/sessions', {
       action: 'stop',
       user_id: props.userId,
       elapsed_seconds: elapsedTime.value,

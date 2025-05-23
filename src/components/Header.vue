@@ -59,7 +59,7 @@ const toggleUserProfile = () => {
         class="flex gap-2 md:gap-3 items-center p-3 relative cursor-pointer rounded-lg hover:bg-gray-100 transition-all dark:hover:bg-gray-700"
         @click="toggleUserProfileMenu"
       >
-        <AvatarProfile :avatar="authStore.user.avatar" :avatar-text="authStore.user?.name[0]" />
+        <AvatarProfile :avatar="authStore.user?.avatar" :avatar-text="authStore.user?.name[0]" />
         <div class="flex flex-col">
           <span class="text-base md:text-lg">{{ authStore.user?.name }}</span>
           <span class="text-gray-400 text-xs" v-if="authStore.user?.position_name">

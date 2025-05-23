@@ -1,7 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { defineProps, defineEmits } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 import { useAuthStore } from '@/stores/auth'
 import ProfileIcon from '@/components/icons/ProfileIcon.vue'
 import SettingsIcon from '@/components/icons/SettingsIcon.vue'
@@ -18,11 +18,24 @@ defineProps({
 })
 
 const logout = async () => {
-  await axios.post('/api/logout', {
-    withCredentials: true,
-  })
-  authStore.clearAuthData()
-  router.push('/login')
+  try {
+    // const response = await api.post('/logout', {
+    //   withCredentials: true,
+    // })
+    // if (response.data.status === 'success') {
+    //   console.log(true)
+
+    //   authStore.clearAuthData()
+    //   console.log(authStore.user)
+
+    //   await router.push('/login')
+    // }
+    await authStore.logout()
+    await router.push('/login')
+  } catch (error) {
+    console.error('Ошибка при выходе:', error)
+    // Можно добавить уведомление для пользователя
+  }
 }
 
 const emit = defineEmits(['toggleProfile', 'toggleUserProfileMenu'])

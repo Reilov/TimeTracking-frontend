@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 import { useAvatarUpload } from '@/composables/useAvatarUpload'
 import { useFormState } from '@/composables/useFormState'
 
@@ -39,9 +39,9 @@ const loadEmployeeData = async () => {
   try {
     isLoading.value = true
     const [employeeRes, departmentsRes, positionsRes] = await Promise.all([
-      axios.get(`/api/users/${props.employeeId}`),
-      axios.get('/api/departments'),
-      axios.get('/api/positions'),
+      api.get(`/users/${props.employeeId}`),
+      api.get('/departments'),
+      api.get('/positions'),
     ])
 
     // Преобразуем данные для совместимости с SelectInput
@@ -108,7 +108,7 @@ const saveChanges = async () => {
       formDataToSend.append('employeeData', JSON.stringify(changes))
     }
 
-    const response = await axios.post(`/api/update-profile/${props.employeeId}`, formDataToSend, {
+    const response = await api.post(`/update-profile/${props.employeeId}`, formDataToSend, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
 

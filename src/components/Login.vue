@@ -1,5 +1,5 @@
 <script setup>
-import axios from 'axios'
+import api from '@/api/axios'
 import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -21,8 +21,8 @@ const error = ref(false)
 const handleSubmit = async () => {
   try {
     isLoading.value = true
-    const response = await axios.post(
-      '/api/login',
+    const response = await api.post(
+      '/login',
       {
         email: email.value,
         password: password.value,

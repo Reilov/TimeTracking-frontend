@@ -4,7 +4,7 @@ import EmployeeHoursChart from '@/components/EmployeeHoursChart.vue'
 import StatsBlock from '@/components/StatsBlock.vue'
 import BlockMain from '@/components/BlockMain.vue'
 
-import axios from 'axios'
+import api from '@/api/axios'
 
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
@@ -20,7 +20,7 @@ const workingDaysCount = ref(null)
 
 const fetchTimeStats = async () => {
   try {
-    const response = await axios.get('/api/timer/stats/week', {
+    const response = await api.get('/timer/stats/week', {
       withCredentials: true,
     })
     timeRecords.value = response.data.stats.map((item) => ({
@@ -39,7 +39,7 @@ onMounted(fetchTimeStats)
 
 <template>
   <BlockMain>
-    <Timer :user-id="authStore.user.id" />
+    <Timer :user-id="authStore.user?.id" />
   </BlockMain>
   <div class="grid grid-cols-1 md:grid-cols-2 md:gap-4">
     <BlockMain title="Часы работы по дням">

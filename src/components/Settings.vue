@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import axios from 'axios'
+import api from '@/api/axios'
 import { useTheme } from '@/composables/useTheme'
 import { useAvatarUpload } from '@/composables/useAvatarUpload'
 import { useFormState } from '@/composables/useFormState'
@@ -63,7 +63,7 @@ const saveChanges = async () => {
 
     formData.append('user_id', authStore.user.id)
 
-    const response = await axios.post('/api/update-profile', formData, {
+    const response = await api.post('/update-profile', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       withCredentials: true,
     })

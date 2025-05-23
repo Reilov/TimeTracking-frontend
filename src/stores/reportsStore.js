@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import api from '@/api/axios'
 import { ref } from 'vue'
 
 export const useReportsStore = defineStore('reports', () => {
@@ -12,12 +12,12 @@ export const useReportsStore = defineStore('reports', () => {
     error.value = null
 
     try {
-      const url = `/api/timer/stats/${params.period}/${params.userId}`
+      const url = `/timer/stats/${params.period}/${params.userId}`
 
       const config =
         params.period === 'custom' ? { params: { start: params.start, end: params.end } } : {}
 
-      const response = await axios.get(url, config)
+      const response = await api.get(url, config)
 
       reportData.value = response.data
       return response.data

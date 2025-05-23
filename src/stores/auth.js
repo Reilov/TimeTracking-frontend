@@ -1,16 +1,19 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import api from '@/api/axios'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
     isLoggedIn: false,
+    isLoggingOut: false,
   }),
 
   actions: {
     async checkAuth() {
+      if (this.isLoggingOut) return false
+
       try {
-        const response = await axios.get('/api/check-login', {
+        const response = await api.get('/check-login', {
           withCredentials: true,
         })
 
@@ -36,7 +39,7 @@ export const useAuthStore = defineStore('auth', {
 
     clearAuthData() {
       this.user = null
-      this.isLoggedIn = null
+      this.isLoggedIn = false
     },
 
     updateProfileData(profileData) {
@@ -48,6 +51,18 @@ export const useAuthStore = defineStore('auth', {
 
     setUser(userData) {
       this.user = { ...this.user, ...userData }
+    },
+
+    async logout() {
+      if (this.isLoggingOut) return // Защита от повторного вызова
+
+      this.isLoggingOut = true
+      try {
+        await api.post('/logout', {}, { withCredentials: true })
+        this.clearAuthData()
+      } finally {
+        this.isLoggingOut = false
+      }
     },
   },
 })

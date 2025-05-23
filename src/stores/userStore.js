@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
@@ -16,7 +16,7 @@ export const useUserStore = defineStore('users', () => {
 
     try {
       isLoading.value = true
-      const response = await axios.get('/api/users')
+      const response = await api.get('/users')
       employees.value = response.data.users
     } catch (err) {
       console.error('Ошибка при загрузке пользователей:', err)
@@ -27,11 +27,11 @@ export const useUserStore = defineStore('users', () => {
 
   const fetchEmployee = async (id) => {
     try {
-      const userRes = await axios.get(`/api/users/${id}`)
+      const userRes = await api.get(`/users/${id}`)
       employee.value = userRes.data.user
 
       if (currentUser.role_name === 'HR' || currentUser.role_name === 'Admin') {
-        const statsRes = await axios.get(`/api/timer/stats/week/${id}`)
+        const statsRes = await api.get(`/timer/stats/week/${id}`)
 
         employee.value = {
           ...employee.value,
