@@ -89,14 +89,16 @@ const createEvent = async () => {
 <template>
   <div class="mb-4">
     <h3 class="text-lg font-medium mb-2">Управление событиями</h3>
-    <p class="text-sm text-gray-500">
+    <p class="text-sm text-gray-500 dark:text-gray-400">
       Выберите даты в календаре для отпуска, командировки сотрудника и т.д.
     </p>
   </div>
 
-  <div class="border border-dashed border-gray-400 mb-4 p-3 bg-gray-50 rounded">
+  <div
+    class="border border-dashed border-gray-400 mb-4 p-3 bg-gray-50 rounded dark:bg-gray-900 dark:border-gray-950"
+  >
     <p class="font-medium">Выбранные даты:</p>
-    <p>{{ formattedSelectedDates }}</p>
+    <p class="dark:text-gray-300">{{ formattedSelectedDates }}</p>
   </div>
   <slot name="calendar"></slot>
   <div class="space-y-4">

@@ -168,18 +168,19 @@ defineExpose({ resetSelection })
     v-if="selectMode === 'range' && rangeStart"
     :error="true"
     message="Выберите конечную дату диапазона"
+    class="mb-2"
   />
   <Calendar
     :attributes="calendarAttributes"
     expanded
     borderless
-    class="bg-white dark:bg-gray-700 rounded-lg"
+    class="bg-white dark:bg-gray-700 rounded-lg mb-4"
     :is-dark="isDark"
     @dayclick="handleDayClick"
   />
 </template>
 
-<style scoped>
+<style>
 .vc-dark {
   background-color: var(--color-gray-800);
 }
