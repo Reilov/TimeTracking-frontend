@@ -3,6 +3,7 @@ import Timer from '@/components/Timer.vue'
 import EmployeeHoursChart from '@/components/EmployeeHoursChart.vue'
 import StatsBlock from '@/components/StatsBlock.vue'
 import BlockMain from '@/components/BlockMain.vue'
+import CalendarView from '@/components/CalendarView.vue'
 
 import api from '@/api/axios'
 
@@ -34,19 +35,35 @@ const fetchTimeStats = async () => {
     console.error(err)
   }
 }
-onMounted(fetchTimeStats)
+
+const calendarData = ref([])
+
+const fetchCalendarData = async () => {
+  try {
+    const response = await api.get(`/timer/calendar/${authStore.user?.id}`)
+    calendarData.value = response.data.stats
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+onMounted(() => {
+  fetchTimeStats()
+  fetchCalendarData()
+})
 </script>
 
 <template>
   <BlockMain>
     <Timer :user-id="authStore.user?.id" />
   </BlockMain>
+
   <div class="grid grid-cols-1 md:grid-cols-2 md:gap-4">
     <BlockMain title="Часы работы по дням">
       <EmployeeHoursChart :records="timeRecords" />
     </BlockMain>
 
-    <div class="grid grid-cols-2 gap-4 items-start">
+    <div class="grid grid-cols-auto auto-rows-max gap-x-4 items-start">
       <StatsBlock
         title="Общее время"
         :value="totalHours"
@@ -58,6 +75,9 @@ onMounted(fetchTimeStats)
         :value="avgHours"
         :description="getWorkdayComparison(avgHours)"
       />
+      <BlockMain class="col-span-2 self-start" :showHeader="false">
+        <CalendarView :sessions="calendarData" />
+      </BlockMain>
     </div>
   </div>
 </template>

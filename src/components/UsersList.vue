@@ -5,7 +5,7 @@ import AvatarProfile from '@/components/AvatarProfile.vue'
 import UserProfileDrawer from '@/components/UserProfileDrawer.vue'
 const userStore = useUserStore()
 const isDrawerVisible = ref(false)
-const selectedEmployee = ref(null)
+// const selectedEmployee = ref(null)
 
 defineProps({
   isHrView: { type: Boolean, default: false },
@@ -21,7 +21,6 @@ const columns = [
 
 const viewEmployee = async (id) => {
   await userStore.fetchEmployee(id)
-  selectedEmployee.value = userStore.employee
   isDrawerVisible.value = true
 }
 
@@ -52,7 +51,7 @@ onMounted(userStore.fetchEmployees)
 
 <template>
   <UserProfileDrawer
-    :user-profile="selectedEmployee"
+    :user-profile="userStore.employee"
     v-model="isDrawerVisible"
     :isHrView="isHrView"
   />

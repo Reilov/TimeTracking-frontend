@@ -16,15 +16,18 @@ const baseNavItems = [
   { path: '/users', name: 'Сотрудники' },
 ]
 
-const hrNavItem = {
-  path: '/hr',
-  name: 'HR Панель',
-}
+const hrNavItem = [
+  {
+    path: '/hr',
+    name: 'HR Панель',
+  },
+  { path: '/timesheet', name: 'Табель' },
+]
 
 const navItems = computed(() => {
   const items = [...baseNavItems]
   if (['HR', 'Admin'].includes(authStore.user?.role_name)) {
-    items.push(hrNavItem)
+    items.push(...hrNavItem)
   }
   return items
 })

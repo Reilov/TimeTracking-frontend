@@ -13,7 +13,14 @@ const editEmployee = (id) => {
 <template>
   <BlockMain title="HR Панель">
     <template #header-actions>
-      <Button @click="router.push({ name: 'NewEmployee' })" text-button="Добавить сотрудника" />
+      <div class="flex gap-2">
+        <Button
+          @click="router.push({ name: 'HRTurnstile' })"
+          variant="secondary"
+          text-button="Имитировать турникет"
+        />
+        <Button @click="router.push({ name: 'NewEmployee' })" text-button="Добавить сотрудника" />
+      </div>
     </template>
 
     <router-view v-slot="{ Component }">

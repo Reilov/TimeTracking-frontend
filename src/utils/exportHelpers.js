@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx'
 import { jsPDF } from 'jspdf'
 import '@/fonts/Roboto-Regular-normal'
+import html2pdf from 'html2pdf.js'
 
 // Общие функции форматирования
 const formatHours = (seconds) => (seconds / 3600).toFixed(2)
@@ -166,4 +167,93 @@ export function exportToPdf(data, filename = 'report.pdf') {
   })
 
   doc.save(filename)
+}
+
+export function exportTimesheetToPdf(filename) {
+  const original = document.getElementById('report')
+  if (!original) return
+
+  const clone = original.cloneNode(true)
+  clone.id = 'pdf-clone'
+
+  // Обработка классов
+  clone.querySelectorAll('[class]').forEach((el) => {
+    const classList = el.className
+
+    // Бордеры
+    if (classList.includes('border') || classList.includes('border-b')) {
+      if (classList.includes('border-b')) el.style.borderBottom = '1px solid #d1d5db'
+      if (classList.includes('border-t')) el.style.borderTop = '1px solid #d1d5db'
+      if (classList.includes('border-l')) el.style.borderLeft = '1px solid #d1d5db'
+      if (classList.includes('border-r')) el.style.borderRight = '1px solid #d1d5db'
+      if (classList.includes('border') && !classList.match(/border-[trbl]/)) {
+        el.style.border = '1px solid #d1d5db'
+      }
+    }
+
+    // Цвета
+    if (classList.includes('border-gray-900')) el.style.borderColor = '#111827'
+    if (classList.includes('border-gray-300')) el.style.borderColor = '#d1d5db'
+    if (classList.includes('text-red-600')) el.style.color = '#dc2626'
+
+    el.removeAttribute('class')
+  })
+
+  // Таблицы
+  clone.querySelectorAll('table').forEach((table) => {
+    table.style.borderCollapse = 'collapse'
+    table.style.width = 'auto'
+    table.style.tableLayout = 'auto'
+  })
+
+  // Ячейки
+  clone.querySelectorAll('th, td').forEach((cell) => {
+    cell.style.border = '1px solid #d1d5db'
+    cell.style.padding = '4px'
+    cell.style.fontSize = '10px'
+    cell.style.whiteSpace = 'normal'
+    cell.style.overflow = 'visible'
+    cell.style.textOverflow = 'unset'
+    cell.style.textAlign = 'center'
+  })
+
+  // Контейнер
+  let container = document.getElementById('pdf-temp-container')
+  if (!container) {
+    container = document.createElement('div')
+    container.id = 'pdf-temp-container'
+    container.style.position = 'fixed'
+    container.style.left = '-9999px'
+    container.style.top = '0'
+    document.body.appendChild(container)
+  }
+
+  container.innerHTML = ''
+  container.appendChild(clone)
+
+  // Экспорт
+  html2pdf()
+    .set({
+      margin: 10,
+      filename: filename,
+      html2canvas: {
+        scale: 2,
+        scrollX: 0,
+        scrollY: 0,
+        useCORS: true,
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'landscape',
+      },
+    })
+    .from(clone)
+    .save()
+    .then(() => {
+      console.log('✅ PDF успешно сохранён')
+    })
+    .catch((err) => {
+      console.error('❌ Ошибка при генерации PDF:', err)
+    })
 }

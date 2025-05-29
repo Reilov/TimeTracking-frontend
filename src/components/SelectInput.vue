@@ -8,7 +8,6 @@ const props = defineProps({
   },
   label: {
     type: String,
-    required: true,
   },
   modelValue: {
     default: null,
@@ -49,7 +48,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="mb-4">
-    <div class="block text-gray-700 text-sm font-bold mb-2 dark:text-gray-200">
+    <div v-if="label" class="block text-gray-700 text-sm font-bold mb-2 dark:text-gray-200">
       {{ label }}
     </div>
     <div class="relative" ref="select">

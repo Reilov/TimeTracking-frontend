@@ -52,6 +52,7 @@ export function useExport() {
           total_worked_seconds: stat.total_worked_seconds,
         }))
       }
+      console.log(params.period)
 
       switch (type) {
         case 'pdf':

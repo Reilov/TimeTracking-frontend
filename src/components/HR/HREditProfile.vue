@@ -118,14 +118,13 @@ const saveChanges = async () => {
       if (response.data.profile) {
         // Приводим типы для select-полей
         const profileData = response.data.profile
-        console.log(profileData)
 
         Object.assign(originalData.value, profileData)
         Object.assign(formData, profileData)
       }
 
       if (response.data.profile?.avatar) {
-        tempAvatar.value = null
+        // tempAvatar.value = null
         selectedAvatar.value = null
       }
     } else {
@@ -151,10 +150,18 @@ const resetForm = () => {
 onMounted(() => {
   loadEmployeeData()
 })
+
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const back = () => {
+  router.push({ name: 'UsersList' })
+}
 </script>
 
 <template>
-  <Button textButton="Вернуться назад" variant="primary" size="big" @click="resetForm" />
+  <Button textButton="Вернуться назад" variant="primary" @click="back" />
   <div class="flex flex-col space-y-4 mb-8">
     <div class="relative group rounded-full self-center" @click="triggerFileInput">
       <AvatarProfile

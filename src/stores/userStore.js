@@ -12,7 +12,7 @@ export const useUserStore = defineStore('users', () => {
   const isLoading = ref(false)
 
   const fetchEmployees = async () => {
-    if (employees.value.length) return
+    // if (employees.value.length) return
 
     try {
       isLoading.value = true
@@ -31,17 +31,28 @@ export const useUserStore = defineStore('users', () => {
       employee.value = userRes.data.user
 
       if (currentUser.role_name === 'HR' || currentUser.role_name === 'Admin') {
-        const statsRes = await api.get(`/timer/stats/week/${id}`)
+        const [statsWeekRes, statsAllRes] = await Promise.all([
+          api.get(`/timer/stats/week/${id}`),
+          api.get(`/timer/calendar/${id}`),
+        ])
 
         employee.value = {
           ...employee.value,
-          stats: statsRes.data.stats.map((item) => ({
-            date: item.date,
-            workedSeconds: item.total_worked_seconds,
-          })),
-          totalHours: statsRes.data.total_hours,
-          avgHours: statsRes.data.avg_hours,
-          workingDaysCount: statsRes.data.working_days_count,
+          weeklyStats: {
+            stats: statsWeekRes.data.stats.map((item) => ({
+              date: item.date,
+              workedSeconds: item.total_worked_seconds,
+            })),
+            totalHours: statsWeekRes.data.total_hours,
+            avgHours: statsWeekRes.data.avg_hours,
+            workingDaysCount: statsWeekRes.data.working_days_count,
+            period: statsWeekRes.data.period,
+            startDate: statsWeekRes.data.start_date,
+            endDate: statsWeekRes.data.end_date,
+          },
+          allTimeStats: {
+            stats: statsAllRes.data.stats,
+          },
         }
       }
     } catch (error) {

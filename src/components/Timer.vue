@@ -2,6 +2,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import api from '@/api/axios'
 import Button from '@/components/Button.vue'
+import TextInput from '@/components/TextInput.vue'
+import Message from '@/components/Message.vue'
 
 const props = defineProps({
   userId: Number,
@@ -29,6 +31,7 @@ const startFrontendTimer = () => {
     elapsedTime.value += 1
   }, 1000)
 }
+
 const formattedTime = computed(() => {
   const hours = Math.floor(elapsedTime.value / 3600)
   const minutes = Math.floor((elapsedTime.value % 3600) / 60)
@@ -41,43 +44,42 @@ const formattedTime = computed(() => {
   ].join(':')
 })
 
-onMounted(async () => {
+const syncWithServer = async () => {
   try {
     const response = await api.get('/sessions/active', {
       params: { user_id: props.userId },
-      withCredentials: true,
     })
-    if (response.data.active) {
-      elapsedTime.value = response.data.elapsed_seconds
-      isRunning.value = true
+
+    elapsedTime.value = response.data.elapsed_seconds || 0
+    isRunning.value = response.data.active || false
+
+    if (isRunning.value) {
       startFrontendTimer()
-    } else if (!response.data.active && response.data.elapsed_seconds) {
-      elapsedTime.value = response.data.elapsed_seconds
+    } else {
+      clearInterval(timer)
     }
   } catch (error) {
-    console.error('Ошибка загрузки сессии:', error)
+    console.error('Ошибка синхронизации:', error)
   }
+}
+
+onMounted(async () => {
+  await syncWithServer()
 })
 
 const startTimer = async () => {
   if (isRunning.value) return
 
   try {
-    const sessionResponse = await api.get('/sessions/active', {
-      params: { user_id: props.userId },
-    })
-    if (sessionResponse.data.active) {
-      elapsedTime.value = sessionResponse.data.elapsed_seconds
-    } else {
-      await api.post('/sessions', {
-        action: 'start',
-        user_id: props.userId,
-        elapsed_seconds: 0,
-      })
-    }
+    await syncWithServer()
 
-    isRunning.value = true
-    startFrontendTimer()
+    await api.post('/sessions', {
+      action: 'start',
+      user_id: props.userId,
+      elapsed_seconds: elapsedTime.value,
+    })
+
+    await syncWithServer()
   } catch (error) {
     console.error('Ошибка старта:', error)
   }
@@ -117,33 +119,84 @@ const stopTimer = async () => {
 onUnmounted(() => {
   clearInterval(timer)
 })
+
+const hoursToAdd = ref(0)
+const minutesToAdd = ref(0)
+const message = ref(null)
+
+const addTime = async () => {
+  try {
+    message.value = null
+
+    const totalSecondsToAdd = hoursToAdd.value * 3600 + minutesToAdd.value * 60
+
+    if (isRunning.value) {
+      message.value = 'Таймер запущен. Остановите время и повторите попытку'
+      return
+    }
+
+    if (totalSecondsToAdd <= 0) {
+      message.value = 'Пожалуйста, введите корректное время'
+      return
+    }
+
+    await syncWithServer()
+
+    const newTotalSeconds = elapsedTime.value + totalSecondsToAdd
+
+    await api.post('/sessions', {
+      action: 'add_time',
+      user_id: props.userId,
+      elapsed_seconds: newTotalSeconds,
+    })
+
+    await syncWithServer()
+
+    hoursToAdd.value = 0
+    minutesToAdd.value = 0
+  } catch (error) {
+    console.error('Ошибка добавления времени:', error)
+    alert('Не удалось добавить время')
+  }
+}
 </script>
 
 <template>
-  <div class="flex flex-col items-center">
-    <div class="text-5xl font-bold mb-6 font-mono">{{ formattedTime }}</div>
-    <div class="flex gap-4 flex-wrap justify-center">
-      <Button
-        textButton="Старт"
-        size="big"
-        variant="primaryMinimal"
-        @click="startTimer"
-        :disabled="isRunning"
-      />
-      <Button
-        textButton="Пауза"
-        size="big"
-        variant="secondary"
-        @click="pauseTimer"
-        :disabled="!isRunning"
-      />
-      <Button
-        textButton="Стоп"
-        size="big"
-        variant="secondary"
-        @click="stopTimer"
-        :disabled="elapsedTime === 0"
-      />
+  <div class="flex items-center justify-center gap-40">
+    <div class="flex flex-col items-center">
+      <div class="text-5xl font-bold mb-6 font-mono">{{ formattedTime }}</div>
+      <div class="flex gap-4 flex-wrap justify-center">
+        <Button
+          textButton="Старт"
+          size="big"
+          variant="primaryMinimal"
+          @click="startTimer"
+          :disabled="isRunning"
+        />
+        <Button
+          textButton="Пауза"
+          size="big"
+          variant="secondary"
+          @click="pauseTimer"
+          :disabled="!isRunning"
+        />
+        <Button
+          textButton="Стоп"
+          size="big"
+          variant="secondary"
+          @click="stopTimer"
+          :disabled="elapsedTime === 0"
+        />
+      </div>
+    </div>
+
+    <div class="">
+      <div class="flex gap-4 mb-4">
+        <text-input v-model.number="hoursToAdd" type="number" min="0" label="Часы" />
+        <text-input v-model.number="minutesToAdd" type="number" min="0" max="59" label="Минуты" />
+      </div>
+      <Button textButton="Добавить" size="big" variant="primary" @click="addTime" class="mb-2" />
+      <Message v-if="message" :message="message" error="message" />
     </div>
   </div>
 </template>

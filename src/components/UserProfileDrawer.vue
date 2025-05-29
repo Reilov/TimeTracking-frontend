@@ -1,4 +1,7 @@
 <script setup>
+import CalendarView from '@/components/CalendarView.vue'
+import HRActions from '@/components/HR/HRActions.vue'
+
 import HRReports from '@/components/HR/HRReports.vue'
 import CloseIcon from '@/components/icons/CloseIcon.vue'
 import AvatarProfile from '@/components/AvatarProfile.vue'
@@ -46,7 +49,7 @@ onBeforeUnmount(() => toggleBodyScroll(false))
       <div class="absolute inset-0 bg-black opacity-50" @click="closeDrawer()" />
 
       <div
-        class="absolute right-0 top-0 h-full w-full max-w-xl bg-white shadow-xl transform transition-transform duration-300 ease-in-out dark:bg-gray-800 dark:text-white"
+        class="overflow-y-auto absolute right-0 top-0 h-full w-full max-w-xl bg-white shadow-xl transform transition-transform duration-300 ease-in-out dark:bg-gray-800 dark:text-white"
       >
         <div class="p-6 border-b border-gray-100 dark:border-gray-700">
           <div class="flex justify-between items-center">
@@ -69,12 +72,13 @@ onBeforeUnmount(() => toggleBodyScroll(false))
               { id: 'profile', label: 'Профиль' },
               { id: 'stats', label: 'Статистика' },
               { id: 'reports', label: 'Отчеты' },
+              { id: 'hrActions', label: 'Кадровые действия' },
             ]"
             :active-item="activeTab"
             @update:active-item="activeTab = $event"
           />
         </div>
-        <div class="p-6 h-[calc(100%-120px)]">
+        <div class="p-6">
           <div class="flex flex-col items-center mb-4">
             <AvatarProfile
               :avatar="userProfile.avatar"
@@ -111,17 +115,20 @@ onBeforeUnmount(() => toggleBodyScroll(false))
 
           <template v-else-if="activeTab === 'stats'">
             <div class="space-y-6">
-              <div class="grid grid-cols-2 gap-4">
+              <CalendarView :sessions="userProfile?.allTimeStats.stats" />
+              <div class="flex gap-4">
                 <StatsBlock
+                  class="flex-auto"
                   title="Общее время"
-                  :value="userProfile?.totalHours"
-                  :description="`за ${userProfile?.workingDaysCount}  ${declensionDays(userProfile?.workingDaysCount)}`"
+                  :value="userProfile?.weeklyStats?.totalHours"
+                  :description="`за ${userProfile?.weeklyStats?.workingDaysCount}  ${declensionDays(userProfile?.weeklyStats?.workingDaysCount)}`"
                 />
 
                 <StatsBlock
+                  class="flex-auto"
                   title="Среднее в будний день"
-                  :value="userProfile?.avgHours"
-                  :description="getWorkdayComparison(userProfile?.avgHours)"
+                  :value="userProfile?.weeklyStats?.avgHours"
+                  :description="getWorkdayComparison(userProfile?.weeklyStats?.avgHours)"
                 />
               </div>
 
@@ -130,7 +137,7 @@ onBeforeUnmount(() => toggleBodyScroll(false))
                   Часы работы на неделе
                 </h4>
                 <div class="h-64">
-                  <EmployeeHoursChart :records="userProfile?.stats" />
+                  <EmployeeHoursChart :records="userProfile?.weeklyStats?.stats" />
                 </div>
               </div>
             </div>
@@ -138,6 +145,14 @@ onBeforeUnmount(() => toggleBodyScroll(false))
 
           <template v-else-if="activeTab === 'reports'">
             <HRReports :userId="props.userProfile?.id" :userName="props.userProfile?.name" />
+          </template>
+
+          <template v-else-if="activeTab === 'hrActions'">
+            <HRActions
+              :userId="props.userProfile?.id"
+              :sessions="userProfile?.allTimeStats?.stats"
+              @closeDrawer="closeDrawer"
+            />
           </template>
         </div>
       </div>
