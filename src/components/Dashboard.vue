@@ -54,9 +54,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <BlockMain>
+  <!-- <BlockMain>
     <Timer :user-id="authStore.user?.id" />
-  </BlockMain>
+  </BlockMain> -->
 
   <div class="grid grid-cols-1 md:grid-cols-2 md:gap-4">
     <BlockMain title="Часы работы по дням">

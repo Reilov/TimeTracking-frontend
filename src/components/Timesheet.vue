@@ -5,7 +5,8 @@ import SelectInput from '@/components/SelectInput.vue'
 import BlockMain from '@/components/BlockMain.vue'
 import Button from '@/components/Button.vue'
 import { exportTimesheetToPdf } from '@/utils/exportHelpers'
-
+import TextInput from './TextInput.vue'
+import Message from './Message.vue'
 // переменные
 const timesheetData = ref([])
 const loading = ref(false)
@@ -14,13 +15,13 @@ const selectedEmployeeId = ref('all')
 const selectedMonth = ref(new Date().getMonth() + 1)
 const selectedYear = ref(new Date().getFullYear())
 const statusCodes = {
-  completed: { code: 'Я', name: 'Явка', color: '#e6ffe6' },
-  vacation: { code: 'ОТ', name: 'Отпуск', color: '#fff2cc' },
-  sick: { code: 'Б', name: 'Больничный', color: '#ffe6e6' },
-  day_off: { code: 'ОД', name: 'Отгул', color: '#e6f3ff' },
-  absent: { code: 'Н', name: 'Неявка', color: '#ffcccc' },
-  weekend: { code: 'В', name: 'Выходной', color: '#f0f0f0' },
-  business_trip: { code: 'К', name: 'Командировка', color: '#e6e6ff' },
+  completed: { code: 'Я', name: 'Явка', color: 'var(--completed-color)' },
+  vacation: { code: 'ОТ', name: 'Отпуск', color: 'var(--vacation-color)' },
+  sick: { code: 'Б', name: 'Больничный', color: 'var(--sick-color)' },
+  day_off: { code: 'ОД', name: 'Отгул', color: 'var(--day-off-color)' }, // <- day-off вместо day_off
+  absent: { code: 'Н', name: 'Неявка', color: 'var(--absent-color)' },
+  weekend: { code: 'В', name: 'Выходной', color: 'var(--weekend-color)' },
+  business_trip: { code: 'К', name: 'Командировка', color: 'var(--business-trip-color)' }, // <- business-trip
 }
 const employees = ref([{ id: 'all', name: 'Все' }])
 const allTimesheetData = ref([])
@@ -79,6 +80,7 @@ const getStatusCode = (status) => {
 }
 
 const getDayStatus = (timesheet, dayIndex) => {
+  // const status = timesheet.days[dayIndex]?.status || 'absent'
   return timesheet.days[dayIndex]?.status || 'absent'
 }
 
@@ -145,23 +147,89 @@ watch(selectedEmployeeId, (newId) => {
     timesheetData.value = allTimesheetData.value.filter((item) => item.employee?.id === newId)
   }
 })
+
+const activeTab = ref({ employeeId: null, day: null, status: 'absent' })
+
+const openTab = (employeeId, day) => {
+  if (activeTab.value.employeeId === employeeId && activeTab.value.day === day) {
+    // Закрыть, если кликнули на ту же ячейку
+    activeTab.value = {
+      employeeId: null,
+      day: null,
+      status: '',
+    }
+  } else {
+    activeTab.value = {
+      employeeId,
+      day,
+      status: getDayStatus(
+        timesheetData.value.find((ts) => ts.employee?.id === employeeId),
+        day - 1,
+      ),
+    }
+  }
+}
+
+const hoursToAdd = ref(0)
+const minutesToAdd = ref(0)
+const errorModal = ref('')
+const comment = ref('')
+const addTime = async () => {
+  try {
+    errorModal.value = ''
+
+    const totalSecondsToAdd = hoursToAdd.value * 3600 + minutesToAdd.value * 60
+
+    if (totalSecondsToAdd <= 0 && activeTab.value.status == 'completed') {
+      errorModal.value = 'Введите время'
+      return
+    }
+
+    await api.post('/add-work-day', {
+      user_id: activeTab.value.employeeId,
+      status: activeTab.value.status,
+      elapsed_seconds: totalSecondsToAdd,
+      date: `${selectedYear.value}.${String(selectedMonth.value).padStart(2, '0')}.${String(activeTab.value.day).padStart(2, '0')}`,
+      comment: comment.value,
+    })
+
+    await fetchTimesheetData()
+    activeTab.value = {
+      employeeId: null,
+      day: null,
+      status: '',
+    }
+    hoursToAdd.value = 0
+    minutesToAdd.value = 0
+  } catch (error) {
+    console.error('Ошибка добавления времени:', error)
+    errorModal.value = 'Не удалось добавить время'
+  }
+}
+
+const filteredStatusCodes = computed(() => {
+  const keys = ['completed', 'day_off']
+  return keys.map((key) => ({
+    id: key,
+    name: statusCodes[key].name,
+  }))
+})
 </script>
 
 <template>
   <BlockMain title="Табель учета рабочего времени">
     <template #header-actions>
       <div class="flex justify-end items-center gap-4">
-        <div class="flex flex-col justify-center gap-2">
-          <div class="flex items-center gap-2">
-            <SelectInput v-model="selectedEmployeeId" :options="employees" class="w-40" />
-            <SelectInput v-model="selectedMonth" :options="monthOptions" class="w-40" />
-            <SelectInput
-              v-model="selectedYear"
-              :options="[2023, 2024, 2025].map((y) => ({ id: y, name: y }))"
-              class="w-24"
-            />
-          </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <SelectInput v-model="selectedEmployeeId" :options="employees" class="w-40" />
+          <SelectInput v-model="selectedMonth" :options="monthOptions" class="w-40" />
+          <SelectInput
+            v-model="selectedYear"
+            :options="[2023, 2024, 2025].map((y) => ({ id: y, name: y }))"
+            class="w-24"
+          />
         </div>
+
         <Button
           @click="
             exportTimesheetToPdf(
@@ -172,6 +240,24 @@ watch(selectedEmployeeId, (newId) => {
         />
       </div>
     </template>
+    <div class="flex gap-4 flex-wrap">
+      <div
+        class="w-max mb-2 flex items-center gap-1"
+        v-for="statusCode in statusCodes"
+        :key="statusCode"
+      >
+        <div
+          class="p-1 py-2 text-center"
+          :style="{
+            backgroundColor: statusCode.color || '#fff',
+          }"
+        >
+          {{ statusCode.code }}
+        </div>
+        -
+        <span>{{ statusCode.name }}</span>
+      </div>
+    </div>
 
     <div v-if="loading" class="text-center text-lg py-6">Загрузка данных...</div>
     <div v-else-if="error" class="text-center text-red-600 text-lg py-6">{{ error }}</div>
@@ -246,12 +332,53 @@ watch(selectedEmployeeId, (newId) => {
             <td
               v-for="day in firstHalfDays"
               :key="`status-${day}`"
-              class="border border-gray-300 dark:border-gray-900 px-1 py-1 text-center"
+              class="relative border border-gray-300 dark:border-gray-900 px-1 py-1 text-center cursor-pointer"
               :style="{
                 backgroundColor: statusCodes[getDayStatus(timesheet, day - 1)]?.color || '#fff',
               }"
+              @click="openTab(timesheet.employee?.id, day)"
             >
               {{ getStatusCode(getDayStatus(timesheet, day - 1)) }}
+              <div
+                class="modal fixed z-100 bg-white p-2 w-xs border border-gray-300 rounded-lg text-left"
+                v-if="activeTab.employeeId === timesheet.employee?.id && activeTab.day === day"
+                @click.stop
+              >
+                <div class="mb-4">
+                  <b>Имя:</b> {{ timesheet.employee?.name }}
+                  <div class="">
+                    <b>Дата:</b>
+                    <span style="text-transform: capitalize">
+                      {{ monthOptions[selectedMonth - 1].name }}
+                    </span>
+                    {{ day }}
+                  </div>
+                </div>
+                <SelectInput
+                  :options="filteredStatusCodes"
+                  v-model="activeTab.status"
+                  label="Статус"
+                />
+                <div class="flex gap-4 mb-4" v-if="activeTab.status == 'completed'">
+                  <TextInput v-model.number="hoursToAdd" type="number" min="0" label="Часы" />
+                  <TextInput
+                    v-model.number="minutesToAdd"
+                    type="number"
+                    min="0"
+                    max="59"
+                    label="Минуты"
+                  />
+                </div>
+                <TextInput
+                  class="mb-4"
+                  v-if="activeTab.status == 'day_off'"
+                  type="textarea"
+                  v-model="comment"
+                  label="Комментарий"
+                />
+                <Message v-if="errorModal" error="true" :message="errorModal" class="mb-4" />
+                <Button class="w-full" text-button="Подтвердить" @click="addTime" />
+              </div>
             </td>
 
             <!-- Ячейки статусов для второй половины месяца -->
@@ -260,7 +387,7 @@ watch(selectedEmployeeId, (newId) => {
               :key="`status-${day}`"
               class="border border-gray-300 dark:border-gray-900 px-1 py-1 text-center"
               :style="{
-                backgroundColor: statusCodes[getDayStatus(timesheet, day - 1)]?.color || '#fff',
+                backgroundColor: `var(--${getDayStatus(timesheet, day - 1)}-color, #fff)`,
               }"
             >
               {{ getStatusCode(getDayStatus(timesheet, day - 1)) }}
@@ -314,3 +441,35 @@ watch(selectedEmployeeId, (newId) => {
     </div>
   </BlockMain>
 </template>
+
+<style>
+:root {
+  --completed-color: #e6ffe6;
+  --vacation-color: #fff2cc;
+  --sick-color: #ffe6e6;
+  --day-off-color: #e6f3ff;
+  --absent-color: #ffcccc;
+  --weekend-color: #f0f0f0;
+  --business-trip-color: #e6e6ff;
+  --active-color: #bb86fc;
+}
+
+html.dark {
+  --completed-color: #6b996b; /* Тёмно-зелёный */
+  --vacation-color: #c4a95a; /* Тёмно-жёлтый */
+  --sick-color: #c47d7d; /* Тёмно-розовый */
+  --day-off-color: #5a8fb8; /* Тёмно-голубой */
+  --absent-color: #c45a5a; /* Тёмно-красный */
+  --weekend-color: #8c8c8c; /* Серый */
+  --business-trip-color: #5a5ab8; /* Тёмно-синий */
+  --active-color: #bb86fc;
+}
+
+.modal {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+</style>

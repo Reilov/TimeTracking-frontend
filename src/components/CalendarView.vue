@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { Calendar } from 'v-calendar'
 import 'v-calendar/dist/style.css'
 import { useTheme } from '@/composables/useTheme'
@@ -25,7 +25,14 @@ const rangeStart = ref(null)
 // Атрибуты календаря (существующие сессии + выбранные даты)
 const calendarAttributes = computed(() => {
   const attributes = []
-
+  attributes.push({
+    key: 'current-month',
+    dates: new Date(),
+    highlight: {
+      color: 'transparent',
+      fillMode: 'none',
+    },
+  })
   // 1. Добавляем существующие сессии
   props.sessions.forEach((session) => {
     let color = 'green'
@@ -42,7 +49,7 @@ const calendarAttributes = computed(() => {
         break
       case 'day_off':
         color = 'lightgray'
-        label = 'Выходной'
+        label = 'Отгул'
         break
       case 'business_trip':
         color = 'purple'
@@ -72,7 +79,6 @@ const calendarAttributes = computed(() => {
     if (session.status === 'completed') {
       popoverLabel = `
         ${label ? label + '\n' : ''}
-        Время: ${session.startTime} — ${session.endTime || 'еще работает'}
         Отработано: ${workedHours}ч ${workedMinutes}м
         Статус: ${label}
       `
