@@ -24,27 +24,27 @@ const viewEmployee = async (id) => {
   isDrawerVisible.value = true
 }
 
-const statusClass = (status) => {
-  switch (status) {
-    case 'active':
-      return 'bg-green-700'
-    case 'paused':
-      return 'bg-orange-400'
-    default:
-      return 'bg-red-500'
-  }
-}
+// const statusClass = (status) => {
+//   switch (status) {
+//     case 'active':
+//       return 'bg-green-700'
+//     case 'paused':
+//       return 'bg-orange-400'
+//     default:
+//       return 'bg-red-500'
+//   }
+// }
 
-const statusTitle = (status) => {
-  switch (status) {
-    case 'active':
-      return 'Работает'
-    case 'paused':
-      return 'На перерыве'
-    default:
-      return 'Неактивен'
-  }
-}
+// const statusTitle = (status) => {
+//   switch (status) {
+//     case 'active':
+//       return 'Работает'
+//     case 'paused':
+//       return 'На перерыве'
+//     default:
+//       return 'Неактивен'
+//   }
+// }
 
 onMounted(userStore.fetchEmployees)
 </script>
@@ -99,11 +99,7 @@ onMounted(userStore.fetchEmployees)
                   :avatar-text="employee.name[0]"
                   size="small"
                 />
-                <span
-                  class="absolute w-4 h-4 bottom-0 right-0 rounded-full"
-                  :title="statusTitle(employee.status)"
-                  :class="statusClass(employee.status)"
-                ></span>
+                <span class="absolute w-4 h-4 bottom-0 right-0 rounded-full"></span>
               </div>
             </template>
             <template v-else>
