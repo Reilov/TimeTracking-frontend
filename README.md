@@ -45,7 +45,7 @@
 1. **Клонировать репозиторий**
    ```bash
    git clone https://github.com/Reilov/TimeTracking-frontend.git
-   cd time-tracking-frontend
+   cd timetracking-frontend
    ```
 
 2. **Установить зависимости**
