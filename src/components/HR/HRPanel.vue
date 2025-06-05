@@ -14,11 +14,11 @@ const editEmployee = (id) => {
   <BlockMain title="HR Панель">
     <template #header-actions>
       <div class="flex gap-2">
-        <Button
+        <!-- <Button
           @click="router.push({ name: 'HRTurnstile' })"
           variant="secondary"
           text-button="Имитировать турникет"
-        />
+        /> -->
         <Button @click="router.push({ name: 'NewEmployee' })" text-button="Добавить сотрудника" />
       </div>
     </template>

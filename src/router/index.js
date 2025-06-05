@@ -73,7 +73,6 @@ const router = createRouter({
               name: 'HRTurnstile',
               component: () => import('@/components/HR/HRTurnstile.vue'),
               meta: { title: 'Имитирование турникета' },
-              // props: (route) => ({ employeeId: route.params.id }),
             },
           ],
         },

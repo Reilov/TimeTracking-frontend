@@ -38,7 +38,7 @@ const emit = defineEmits(['update:activeItem'])
       :key="item.id"
       :to="type === 'router-link' ? item.path : undefined"
       @click="type === 'button' ? emit('update:activeItem', item.id) : undefined"
-      class="cursor-pointer px-3 py-2 text-sm font-medium relative transition-all"
+      class="cursor-pointer px-2 py-1 md:px-3 md:py-2 text-sm font-medium relative transition-all"
       :class="activeItem === item.id ? 'text-orange-500' : 'hover:text-orange-500'"
     >
       {{ item.label }}

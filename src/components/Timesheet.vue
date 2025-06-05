@@ -99,15 +99,6 @@ const monthDays = computed(() => {
   return Array.from({ length: daysInSelectedMonth.value }, (_, i) => i + 1)
 })
 
-// Разделяем месяц на две половины
-const firstHalfDays = computed(() => {
-  return monthDays.value.slice(0, 15)
-})
-
-const secondHalfDays = computed(() => {
-  return monthDays.value.slice(15)
-})
-
 // Итоговые вычисления
 const totalWorkedTime = computed(() => {
   const totalSeconds = timesheetData.value.reduce((sum, item) => {
@@ -219,7 +210,7 @@ const filteredStatusCodes = computed(() => {
 <template>
   <BlockMain title="Табель учета рабочего времени">
     <template #header-actions>
-      <div class="flex justify-end items-center gap-4">
+      <div class="flex justify-end items-center gap-4 flex-col md:flex-row mt-4 md:mt-0">
         <div class="flex items-center gap-2 flex-wrap">
           <SelectInput v-model="selectedEmployeeId" :options="employees" class="w-40" />
           <SelectInput v-model="selectedMonth" :options="monthOptions" class="w-40" />
@@ -330,7 +321,7 @@ const filteredStatusCodes = computed(() => {
 
             <!-- Ячейки статусов для первой половины месяца -->
             <td
-              v-for="day in firstHalfDays"
+              v-for="day in monthDays"
               :key="`status-${day}`"
               class="relative border border-gray-300 dark:border-gray-900 px-1 py-1 text-center cursor-pointer"
               :style="{
@@ -340,7 +331,7 @@ const filteredStatusCodes = computed(() => {
             >
               {{ getStatusCode(getDayStatus(timesheet, day - 1)) }}
               <div
-                class="modal fixed z-100 bg-white p-2 w-xs border border-gray-300 rounded-lg text-left"
+                class="modal fixed z-100 bg-white dark:bg-gray-800 p-2 w-xs border border-gray-300 dark:border-gray-900 rounded-lg text-left"
                 v-if="activeTab.employeeId === timesheet.employee?.id && activeTab.day === day"
                 @click.stop
               >
@@ -381,18 +372,6 @@ const filteredStatusCodes = computed(() => {
               </div>
             </td>
 
-            <!-- Ячейки статусов для второй половины месяца -->
-            <td
-              v-for="day in secondHalfDays"
-              :key="`status-${day}`"
-              class="border border-gray-300 dark:border-gray-900 px-1 py-1 text-center"
-              :style="{
-                backgroundColor: `var(--${getDayStatus(timesheet, day - 1)}-color, #fff)`,
-              }"
-            >
-              {{ getStatusCode(getDayStatus(timesheet, day - 1)) }}
-            </td>
-
             <!-- Отработано часов за первую половину -->
             <td class="text-center" colspan="2">
               <div style="border-bottom: 1px solid #d1d5db; padding: 4px">Дней отработано</div>
@@ -407,16 +386,7 @@ const filteredStatusCodes = computed(() => {
 
             <!-- Ячейки часов для первой половины месяца -->
             <td
-              v-for="day in firstHalfDays"
-              :key="`hours-${day}`"
-              class="border border-gray-300 dark:border-gray-900 px-1 py-1 text-center"
-            >
-              {{ formatTime(getDayWorkedSeconds(timesheet, day - 1)) }}
-            </td>
-
-            <!-- Ячейки часов для второй половины месяца -->
-            <td
-              v-for="day in secondHalfDays"
+              v-for="day in monthDays"
               :key="`hours-${day}`"
               class="border border-gray-300 dark:border-gray-900 px-1 py-1 text-center"
             >
