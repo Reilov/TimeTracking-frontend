@@ -1,4 +1,6 @@
 <script setup>
+import Timer from '@/components/Timer.vue'
+
 import { computed, onMounted, ref } from 'vue'
 import { useUserStore } from '@/stores/userStore'
 import SelectInput from '@/components/SelectInput.vue'
@@ -161,6 +163,8 @@ function onButtonClick() {
       </div>
     </div>
   </div>
+
+  <Timer v-if="selectedUser" :user-id="selectedUser?.id" />
 </template>
 
 <style scoped>

@@ -39,7 +39,7 @@ const router = createRouter({
           path: 'users',
           name: 'Users',
           component: Users,
-          meta: { title: 'Сотрудники' },
+          meta: { title: 'Сотрудники', disallowedRoles: ['Admin', 'HR'] },
         },
         {
           path: 'hr',
@@ -128,6 +128,13 @@ router.beforeEach(async (to) => {
       if (!userRole || !allowedRoles.includes(userRole)) {
         return { path: '/', query: { error: 'forbidden' } }
       }
+    }
+  }
+
+  if (to.meta.disallowedRoles) {
+    const userRole = authStore.user?.role_name
+    if (userRole && to.meta.disallowedRoles.includes(userRole)) {
+      return { path: '/', query: { error: 'forbidden' } }
     }
   }
 })

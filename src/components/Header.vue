@@ -12,21 +12,23 @@ const userProfileMenu = ref(false)
 const userProfile = ref(false)
 const mobileMenuOpen = ref(false)
 
-const baseNavItems = [
-  { path: '/', name: 'Главная' },
-  { path: '/users', name: 'Сотрудники' },
-]
-
 const hrNavItem = [
-  {
-    path: '/hr',
-    name: 'HR Панель',
-  },
+  { path: '/hr', name: 'HR Панель' },
   { path: '/timesheet', name: 'Табель' },
 ]
 
+const baseNavItems = computed(() => {
+  const items = [{ path: '/', name: 'Главная' }]
+
+  if (!['HR', 'Admin'].includes(authStore.user?.role_name)) {
+    items.push({ path: '/users', name: 'Сотрудники' })
+  }
+
+  return items
+})
+
 const navItems = computed(() => {
-  const items = [...baseNavItems]
+  const items = [...baseNavItems.value]
   if (['HR', 'Admin'].includes(authStore.user?.role_name)) {
     items.push(...hrNavItem)
   }

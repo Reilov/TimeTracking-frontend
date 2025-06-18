@@ -374,7 +374,9 @@ const filteredStatusCodes = computed(() => {
 
             <!-- Отработано часов за первую половину -->
             <td class="text-center" colspan="2">
-              <div style="border-bottom: 1px solid #d1d5db; padding: 4px">Дней отработано</div>
+              <div style="padding: 4px" class="border-b border-gray-300 dark:border-gray-900">
+                Дней отработано
+              </div>
               <div style="padding: 4px">
                 {{ timesheet.summary.working_days }}
               </div>

@@ -1,5 +1,5 @@
 <script setup>
-import Timer from '@/components/Timer.vue'
+// import Timer from '@/components/Timer.vue'
 import EmployeeHoursChart from '@/components/EmployeeHoursChart.vue'
 import StatsBlock from '@/components/StatsBlock.vue'
 import BlockMain from '@/components/BlockMain.vue'
